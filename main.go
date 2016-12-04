@@ -115,9 +115,15 @@ func main() {
 				hoffset -= 1
 				if hoffset < 0 {hoffset = 0}
 				display(data, voffset, hoffset)
+			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome {
+				hoffset = 0
+				voffset = 0
+				display(data, voffset, hoffset)
+			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
+				_, termHeight := termbox.Size()
+				voffset = len(data) - termHeight + 1
+				display(data, voffset, hoffset)
 			}
-			
-			
 		} else if event.Type == termbox.EventResize {
 			display(data, voffset, hoffset)
 		}
