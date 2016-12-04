@@ -11,6 +11,7 @@ import ("fmt";
 
 func main() {
 	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
+	var fixHeader = flag.Bool("header", false, "Fix header line")
 	flag.Parse()
 
 	if len(flag.Args()) != 1 {
@@ -76,7 +77,7 @@ func main() {
 
 	voffset := 0
 	hoffset := 0
-	display(data, voffset, hoffset)
+	display(data, voffset, hoffset, *fixHeader)
 
 	for {
 		event := termbox.PollEvent()
@@ -88,59 +89,74 @@ func main() {
 				event.Key == termbox.KeyEnter {
 				voffset += 1
 				if voffset >= len(data) {voffset = len(data)-1}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('F') || event.Ch == rune('f') ||
 				event.Key == termbox.KeyCtrlV || event.Key == termbox.KeyCtrlF ||
 				event.Key == termbox.KeyPgdn {
 				_, termHeight := termbox.Size()
 				voffset += termHeight
 				if voffset >= len(data) {voffset = len(data)-1}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('k') || event.Ch == rune('p') ||
 				event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp  {
 				voffset -= 1
 				if voffset < 0 {voffset = 0}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('b') || event.Ch == rune('B') ||
 				event.Key == termbox.KeyCtrlB  || event.Key == termbox.KeyPgup {
 				_, termHeight := termbox.Size()
 				voffset -= termHeight
 				if voffset < 0 {voffset = 0}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('l') || event.Key == termbox.KeyArrowRight {
 				hoffset += 1
 				if hoffset >= maxColumn {hoffset = maxColumn - 1}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('h') || event.Key == termbox.KeyArrowLeft {
 				hoffset -= 1
 				if hoffset < 0 {hoffset = 0}
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome {
 				hoffset = 0
 				voffset = 0
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
 				_, termHeight := termbox.Size()
 				voffset = len(data) - termHeight + 1
-				display(data, voffset, hoffset)
+				display(data, voffset, hoffset, *fixHeader)
 			}
 		} else if event.Type == termbox.EventResize {
-			display(data, voffset, hoffset)
+			display(data, voffset, hoffset, *fixHeader)
 		}
 	}
 }
 
-func display(data [][]string, offset int, hoffset int) {
+
+func display(data [][]string, offset int, hoffset int, fixHeader bool) {
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+
+	lastLine := offset + termHeight
+	if lastLine > len(data) {lastLine = len(data)}
+
+	showData := make([][]string, lastLine - offset)
+
+	if (fixHeader) {
+		showData[0] = data[0][hoffset:]
+		for i := offset; i < lastLine-1; i++ {
+			showData[i - offset + 1] = data[i + 1][hoffset:]
+		}
+	} else {
+		showData = data[offset:lastLine][hoffset:]
+	}
 	
 	columnSize := make([]int, len(data[0]))
 
-	for i := offset; i < len(data) && (i-offset) < termHeight; i++ {
-		for j := 0; j < len(data[i]); j++ {
-			textwidth := displayWidth(data[i][j])
+	for _, v := range showData {
+		for j := 0; j < len(v); j++ {
+			textwidth := displayWidth(v[j])
 			
 			if (columnSize[j] < textwidth) {
 				columnSize[j] = textwidth
@@ -151,10 +167,10 @@ func display(data [][]string, offset int, hoffset int) {
 	termbox.SetCursor(0, 0)
 
 	i1 := 0
-	for i1 = offset; i1 < len(data) && (i1-offset) < termHeight; i1++ {
+	var v1 []string
+	for i1, v1 = range showData {
 		printLine := ""
-		for i2 := hoffset; i2 < len(data[i1]); i2++ {
-			v2 := data[i1][i2]
+		for i2, v2 := range v1{
 			width := displayWidth(v2)
 			if i2 != hoffset {
 				printLine += " | "
@@ -164,7 +180,7 @@ func display(data [][]string, offset int, hoffset int) {
 				printLine += " "
 			}
 			
-			printLine += v2
+			printLine += string(v2)
 		}
 
 		fmt.Print(substringByDisplayWidth(printLine, termWidth))
@@ -176,14 +192,14 @@ func display(data [][]string, offset int, hoffset int) {
 		fmt.Println()
 	}
 
-	for ; (i1-offset) < termHeight; i1++ {
+	for ; i1 < termHeight-1; i1++ {
 		for i2 := 0; i2 < termWidth; i2++ {
 			fmt.Print(" ")
 		}
 		fmt.Println()
 	}
 
-	fmt.Printf("(line: %d / column: %d)   ", offset, hoffset)
+	fmt.Printf("(line: %d/%d   column: %d)   ", offset + 1, len(data), hoffset + 1)
 	termbox.SetCursor(0, termHeight)
 	termbox.Flush()
 }
