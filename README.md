@@ -1,7 +1,7 @@
 tableview
 =========
 
-Format CSV file as human readable table
+Format CSV or TSV file as human readable table
 
 License
 -------

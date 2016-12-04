@@ -3,23 +3,40 @@ package main
 import ("fmt";
 	"os";
 	"encoding/csv";
+	"flag";
 	"golang.org/x/text/width";
 	"github.com/nsf/termbox-go"
 )
 
+
+
 func main() {
-	if len(os.Args) != 2 {
+	var format = flag.String("format", "csv", "input format (csv/tsv/tdf)")
+	flag.Parse()
+
+	if (*format == "tdf") {
+		*format = "tsv"
+	} else if !(*format == "csv" || *format == "tsv") {
+		fmt.Printf("Invalid format: %s\n", *format)
+		os.Exit(1)
+	}
+	
+	if len(flag.Args()) != 1 {
 		fmt.Printf("tableview FILE\n")
 		os.Exit(1)
 	}
 
-	inputFile, err3 := os.Open(os.Args[1])
+	inputFile, err3 := os.Open(flag.Args()[0])
 	if err3 != nil {
 		panic(err3)
 	}
 	
 	defer inputFile.Close()
 	csvReader := csv.NewReader(inputFile)
+	if *format == "tsv" {
+		csvReader.Comma = '\t'
+		csvReader.LazyQuotes = true
+	}
 
 	data, err2 := csvReader.ReadAll()
 	if err2 != nil {
@@ -48,20 +65,26 @@ func main() {
 		if event.Type == termbox.EventKey {
 			if event.Ch == rune('q') || event.Key == termbox.KeyEsc {
 				break
-			} else if event.Ch == rune('j') || event.Ch == rune('n') || event.Key == termbox.KeyCtrlN || event.Key == termbox.KeyArrowDown || event.Key == termbox.KeyEnter {
+			} else if event.Ch == rune('j') || event.Ch == rune('n') ||
+				event.Key == termbox.KeyCtrlN || event.Key == termbox.KeyArrowDown ||
+				event.Key == termbox.KeyEnter {
 				voffset += 1
 				if voffset >= len(data) {voffset = len(data)-1}
 				display(data, voffset, hoffset)
-			} else if event.Ch == rune('F') || event.Ch == rune('f') || event.Key == termbox.KeyCtrlV || event.Key == termbox.KeyCtrlF || event.Key == termbox.KeyPgdn {
+			} else if event.Ch == rune('F') || event.Ch == rune('f') ||
+				event.Key == termbox.KeyCtrlV || event.Key == termbox.KeyCtrlF ||
+				event.Key == termbox.KeyPgdn {
 				_, termHeight := termbox.Size()
 				voffset += termHeight
 				if voffset >= len(data) {voffset = len(data)-1}
 				display(data, voffset, hoffset)
-			} else if event.Ch == rune('k') || event.Ch == rune('p') || event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp  {
+			} else if event.Ch == rune('k') || event.Ch == rune('p') ||
+				event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp  {
 				voffset -= 1
 				if voffset < 0 {voffset = 0}
 				display(data, voffset, hoffset)
-			} else if event.Ch == rune('b') || event.Ch == rune('B') || event.Key == termbox.KeyCtrlB  || event.Key == termbox.KeyPgup {
+			} else if event.Ch == rune('b') || event.Ch == rune('B') ||
+				event.Key == termbox.KeyCtrlB  || event.Key == termbox.KeyPgup {
 				_, termHeight := termbox.Size()
 				voffset -= termHeight
 				if voffset < 0 {voffset = 0}
