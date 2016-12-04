@@ -3,28 +3,46 @@ package main
 import ("fmt";
 	"os";
 	"encoding/csv";
+	"strings";
 	"flag";
 	"golang.org/x/text/width";
 	"github.com/nsf/termbox-go"
 )
 
-
-
 func main() {
-	var format = flag.String("format", "csv", "input format (csv/tsv/tdf)")
+	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
 	flag.Parse()
 
-	if (*format == "tdf") {
+	if len(flag.Args()) != 1 {
+		fmt.Println("tableview [-format FORMAT] FILE\n")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	filename := flag.Args()[0]
+
+	if (*format == "auto") {
+		if strings.HasSuffix(filename, ".csv") {
+			*format = "csv"
+		} else if strings.HasSuffix(filename, ".txt") {
+			*format = "tsv"
+		} else if strings.HasSuffix(filename, ".tsv") {
+			*format = "tsv"
+		} else if strings.HasSuffix(filename, ".tdf") {
+			*format = "tsv"
+		} else {
+			fmt.Println("Cannot suggest format")
+			fmt.Println("Please set -format flag")
+			os.Exit(1)
+		}
+	} else if (*format == "tdf") {
 		*format = "tsv"
 	} else if !(*format == "csv" || *format == "tsv") {
 		fmt.Printf("Invalid format: %s\n", *format)
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	
-	if len(flag.Args()) != 1 {
-		fmt.Printf("tableview FILE\n")
-		os.Exit(1)
-	}
+
 
 	inputFile, err3 := os.Open(flag.Args()[0])
 	if err3 != nil {
