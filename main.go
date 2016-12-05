@@ -171,7 +171,7 @@ func display(data [][]string, offset int, hoffset int, fixHeader bool) {
 		printLine := ""
 		for i2, v2 := range v1{
 			width := displayWidth(v2)
-			if i2 != hoffset {
+			if i2 != 0 {
 				printLine += " | "
 			}
 
