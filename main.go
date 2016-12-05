@@ -148,7 +148,9 @@ func display(data [][]string, offset int, hoffset int, fixHeader bool) {
 			showData[i - offset + 1] = data[i + 1][hoffset:]
 		}
 	} else {
-		showData = data[offset:lastLine][hoffset:]
+		for i := offset; i < lastLine; i++ {
+			showData[i - offset] = data[i][hoffset:]
+		}
 	}
 	
 	columnSize := make([]int, len(data[0]))
@@ -169,37 +171,36 @@ func display(data [][]string, offset int, hoffset int, fixHeader bool) {
 	var v1 []string
 	for i1, v1 = range showData {
 		printLine := ""
+		currentPos := 0
+		
 		for i2, v2 := range v1{
-			width := displayWidth(v2)
 			if i2 != 0 {
-				printLine += " | "
+				termbox.SetCell(currentPos + 1, i1, '|', termbox.ColorGreen, termbox.ColorDefault)
+				currentPos += 3
 			}
 
-			for j := 0; j < columnSize[i2] - width; j++ {
-				printLine += " "
-			}
+			width := displayWidth(v2)
+			currentPos += columnSize[i2] - width
 			
 			printLine += string(v2)
+			for _, v3 := range v2 {
+				termbox.SetCell(currentPos, i1, v3, termbox.ColorDefault, termbox.ColorDefault)
+				currentPos += displayWidthChar(v3)
+				if termWidth < currentPos {
+					break
+				}
+			}
 		}
-
-		fmt.Print(substringByDisplayWidth(printLine, termWidth))
-
-		for i2 := displayWidth(printLine); i2 < termWidth; i2++ {
-			fmt.Print(" ")
-		}
-		
-		fmt.Println()
 	}
 
-	for ; i1 < termHeight-1; i1++ {
-		for i2 := 0; i2 < termWidth; i2++ {
-			fmt.Print(" ")
-		}
-		fmt.Println()
+	
+	status := fmt.Sprintf("(line: %d/%d   column: %d)", offset + 1, len(data), hoffset + 1)
+	currentPos := 0
+	for _, v := range(status) {
+		termbox.SetCell(currentPos, termHeight, v, termbox.ColorGreen, termbox.ColorDefault)
+		currentPos += displayWidthChar(v)
 	}
-
-	fmt.Printf("(line: %d/%d   column: %d)   ", offset + 1, len(data), hoffset + 1)
-	termbox.SetCursor(0, termHeight)
+	termbox.SetCursor(currentPos, termHeight)
 	termbox.Flush()
 }
 
