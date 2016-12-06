@@ -78,46 +78,26 @@ func CheckTestData1(table Table, t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	input, err1 := os.Open("test1.csv")
+	data, err1 := LoadTableFromFile("test1.csv")
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
 	}
-	defer input.Close()
+	defer data.Close()
 
-	reader := csv.NewReader(input)
-	
-	table, err2 := CreateTable(reader)
-
-	if err2 != nil {
-		t.Errorf("cannot load data: %s", err2)
-		return
-	}
-
-	CheckTestData1(table, t)
+	CheckTestData1(data, t)
 }
 
 func TestCreateTable2(t *testing.T) {
-	input, err1 := os.Open("test1.txt")
-
+	data, err1 := LoadTableFromFile("test1.txt", "auto")
+	
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
 	}
-	defer input.Close()
+	defer data.Close()
 
-	reader := csv.NewReader(input)
-	reader.Comma = '\t'
-	reader.LazyQuotes = true
-	
-	table, err2 := CreateTable(reader)
-
-	if err2 != nil {
-		t.Errorf("cannot load data: %s", err2)
-		return
-	}
-
-	CheckTestData1(table, t)
+	CheckTestData1(data, t)
 }
 
