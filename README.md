@@ -1,6 +1,8 @@
 tableview
 =========
 
+[![Build Status](https://travis-ci.org/informationsea/tableview.svg?branch=master)](https://travis-ci.org/informationsea/tableview)
+
 Format CSV or TSV file as human readable table
 
 License
