@@ -3,7 +3,9 @@ package main
 import ("fmt";
 	"os";
 	"flag";
-	"github.com/nsf/termbox-go"
+	"github.com/nsf/termbox-go";
+	"regexp";
+	"errors"
 )
 
 func main() {
@@ -36,14 +38,14 @@ func main() {
 
 type Display struct {
 	data Table
-	searchText string
+	searchText *regexp.Regexp
 	voffset int
 	hoffset int
 	fixHeader bool
 }
 
 func CreateDisplay(data Table, fixHeader bool) *Display {
-	return &Display{data, "", 0, 0, fixHeader}
+	return &Display{data, nil, 0, 0, fixHeader}
 }
 
 func (d *Display) WaitEvent() {
@@ -113,7 +115,28 @@ func (d *Display) Scroll(v int, h int) {
 	}
 }
 
-func (d *Display) ReadSearchText() bool {
+func (d *Display) ShowError(e string) {
+	termWidth, termHeight := termbox.Size()
+	termHeight -= 1
+	for i := 0; i < termWidth; i++ {
+		termbox.SetCell(i, termHeight, ' ', termbox.ColorDefault, termbox.ColorDefault)
+	}
+
+	for i, v := range(e) {
+		termbox.SetCell(i, termHeight, v, termbox.ColorRed, termbox.ColorWhite)
+	}
+	termbox.SetCursor(len(e), termHeight)
+
+	for {
+		termbox.Flush()
+		event := termbox.PollEvent()
+		if event.Type == termbox.EventKey {
+			break
+		}
+	}
+}
+
+func (d *Display) GetCommand(prompt string) (string, error) {
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 	for i := 0; i < termWidth; i++ {
@@ -130,12 +153,20 @@ func (d *Display) ReadSearchText() bool {
 		event := termbox.PollEvent()
 		if event.Type == termbox.EventKey {
 			if event.Key == termbox.KeyEsc || event.Key == termbox.KeyCtrlC {
-				d.searchText = ""
-				return false
+				d.searchText = nil
+				return "", errors.New("Canceled")
+			} else if event.Key == termbox.KeyBackspace || event.Key == termbox.KeyBackspace2 {
+				if len(text) > 0 {
+					currentPosition -= displayWidthChar(rune(text[len(text)-1]))
+					termbox.SetCell(currentPosition, termHeight, ' ', termbox.ColorDefault, termbox.ColorDefault)
+					termbox.SetCursor(currentPosition, termHeight)
+					text = text[0:len(text)-1]
+				}
 			} else if event.Key == termbox.KeyEnter || event.Key == termbox.KeyCtrlJ ||
 				event.Key == termbox.KeyCtrlM {
-				d.searchText = text
-				return text != ""
+				
+			return text, nil
+
 			} else {
 				text += string(event.Ch)
 				termbox.SetCell(currentPosition, termHeight, event.Ch,
@@ -145,6 +176,31 @@ func (d *Display) ReadSearchText() bool {
 			}
 		}
 	}
+}
+
+func (d *Display) ReadSearchText() bool {
+	text, err1 := d.GetCommand("/")
+	if err1 != nil {
+		d.searchText = nil
+		d.ShowError(err1.Error())
+		return false
+	}
+
+	if text == "" {
+		d.searchText = nil
+		return false
+	}
+	
+	reg, err2 := regexp.Compile(text)
+
+	if err2 != nil {
+		d.searchText = nil
+		d.ShowError(err2.Error())
+		return false
+	}
+	
+	d.searchText = reg
+	return true
 }
 
 func (d *Display) Display() {
@@ -186,7 +242,6 @@ func (d *Display) Display() {
 	i1 := 0
 	var v1 []string
 	for i1, v1 = range showData {
-		printLine := ""
 		currentPos := 0
 		
 		for i2, v2 := range v1{
@@ -197,10 +252,27 @@ func (d *Display) Display() {
 
 			width := displayWidth(v2)
 			currentPos += columnSize[i2] - width
+
+			var matches [][]int
+			if d.searchText != nil {
+				matches = d.searchText.FindAllStringIndex(v2, -1)
+			}
 			
-			printLine += string(v2)
-			for _, v3 := range v2 {
-				termbox.SetCell(currentPos, i1, v3, termbox.ColorDefault, termbox.ColorDefault)
+			for i3, v3 := range v2 {
+				searchMatch := false
+				for _, a := range matches {
+					if a[0] <= i3 && i3 < a[1] {
+						searchMatch = true
+					}
+				}
+
+				if searchMatch {
+					termbox.SetCell(currentPos, i1, v3,
+						termbox.ColorRed | termbox.AttrReverse | termbox.AttrBold, termbox.ColorWhite)
+				} else {
+					termbox.SetCell(currentPos, i1, v3, termbox.ColorDefault, termbox.ColorDefault)
+				}
+				
 				currentPos += displayWidthChar(v3)
 				if termWidth < currentPos {
 					break
@@ -209,8 +281,12 @@ func (d *Display) Display() {
 		}
 	}
 
+	searchStatus := ""
+	if d.searchText != nil {
+		searchStatus = fmt.Sprintf("  Search:%s", d.searchText.String())
+	}
 	
-	status := fmt.Sprintf("(line: %d/%d   column: %d)", d.voffset + 1, d.data.GetMaxLine(), d.hoffset + 1)
+	status := fmt.Sprintf("(line: %d/%d   column: %d%s)", d.voffset + 1, d.data.GetMaxLine(), d.hoffset + 1, searchStatus)
 	currentPos := 0
 	for _, v := range(status) {
 		termbox.SetCell(currentPos, termHeight, v, termbox.ColorGreen, termbox.ColorDefault)
