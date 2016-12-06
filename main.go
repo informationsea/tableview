@@ -42,10 +42,12 @@ type Display struct {
 	voffset int
 	hoffset int
 	fixHeader bool
+	searchMatchedLine []int
+	currentMatchedLine int
 }
 
 func CreateDisplay(data Table, fixHeader bool) *Display {
-	return &Display{data, nil, 0, 0, fixHeader}
+	return &Display{data, nil, 0, 0, fixHeader, make([]int, 0), 0}
 }
 
 func (d *Display) WaitEvent() {
@@ -54,7 +56,7 @@ func (d *Display) WaitEvent() {
 		if event.Type == termbox.EventKey {
 			if event.Ch == rune('q') || event.Key == termbox.KeyEsc {
 				break
-			} else if event.Ch == rune('j') || event.Ch == rune('n') ||
+			} else if event.Ch == rune('j') ||
 				event.Key == termbox.KeyCtrlN || event.Key == termbox.KeyArrowDown ||
 				event.Key == termbox.KeyEnter {
 				d.Scroll(1, 0)
@@ -75,9 +77,7 @@ func (d *Display) WaitEvent() {
 			} else if event.Ch == rune('h') || event.Key == termbox.KeyArrowLeft {
 				d.Scroll(0, -1)
 			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome {
-				d.hoffset = 0
-				d.voffset = 0
-				d.Display()
+				d.ScrollTo(0, 0)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
 				_, termHeight := termbox.Size()
 				d.voffset = d.data.GetMaxLine() - termHeight + 1
@@ -85,6 +85,27 @@ func (d *Display) WaitEvent() {
 			} else if event.Ch == rune('/') {
 				d.ReadSearchText()
 				d.Display()
+			} else if event.Ch == rune('n') {
+				if d.currentMatchedLine < len(d.searchMatchedLine) - 1 {
+					d.currentMatchedLine += 1
+					d.ScrollTo(d.searchMatchedLine[d.currentMatchedLine], 0)
+				} else if len(d.searchMatchedLine) > 0 {
+					d.ScrollTo(d.searchMatchedLine[d.currentMatchedLine], 0)
+					d.ShowError("Last matched line")
+				} else {
+					d.ShowError("No matched line")
+				}
+			} else if event.Ch == rune('N') {
+				if d.currentMatchedLine >= 1 {
+					d.currentMatchedLine -= 1
+					d.ScrollTo(d.searchMatchedLine[d.currentMatchedLine], 0)
+				} else if len(d.searchMatchedLine) > 0 {
+					d.ScrollTo(d.searchMatchedLine[d.currentMatchedLine], 0)
+					d.ShowError("First matched line")
+				} else {
+					d.ShowError("No matched line")
+				}
+
 			}
 		} else if event.Type == termbox.EventResize {
 			d.Display()
@@ -93,9 +114,10 @@ func (d *Display) WaitEvent() {
 }
 
 func (d *Display) Scroll(v int, h int) {
-	newVoffset := d.voffset + v
-	newHoffset := d.hoffset + h
+	d.ScrollTo(d.voffset + v, d.hoffset + h)
+}
 
+func (d *Display) ScrollTo(newVoffset int, newHoffset int) {
 	if newVoffset < 0 {
 		newVoffset = 0
 	} else if newVoffset >= d.data.GetMaxLine() {
@@ -126,14 +148,7 @@ func (d *Display) ShowError(e string) {
 		termbox.SetCell(i, termHeight, v, termbox.ColorRed, termbox.ColorWhite)
 	}
 	termbox.SetCursor(len(e), termHeight)
-
-	for {
-		termbox.Flush()
-		event := termbox.PollEvent()
-		if event.Type == termbox.EventKey {
-			break
-		}
-	}
+	termbox.Flush()
 }
 
 func (d *Display) GetCommand(prompt string) (string, error) {
@@ -200,6 +215,22 @@ func (d *Display) ReadSearchText() bool {
 	}
 	
 	d.searchText = reg
+
+	d.searchMatchedLine = make([]int, 0)
+	d.currentMatchedLine = -1
+	for i := 0; i < d.data.GetMaxLine(); i++ {
+		for _, c := range d.data.GetRow(i) {
+			if d.searchText.FindString(c) != "" {
+				d.searchMatchedLine = append(d.searchMatchedLine, i)
+				if d.currentMatchedLine < 0 {
+					d.currentMatchedLine = len(d.searchMatchedLine) - 1
+					d.ScrollTo(i, 0)
+				}
+				break
+			}
+		}
+	}
+	
 	return true
 }
 
@@ -283,7 +314,7 @@ func (d *Display) Display() {
 
 	searchStatus := ""
 	if d.searchText != nil {
-		searchStatus = fmt.Sprintf("  Search:%s", d.searchText.String())
+		searchStatus = fmt.Sprintf("  Search:%s  Found:%d", d.searchText.String(), len(d.searchMatchedLine))
 	}
 	
 	status := fmt.Sprintf("(line: %d/%d   column: %d%s)", d.voffset + 1, d.data.GetMaxLine(), d.hoffset + 1, searchStatus)
