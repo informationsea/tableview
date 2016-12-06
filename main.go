@@ -56,7 +56,7 @@ func main() {
 		csvReader.LazyQuotes = true
 	}
 
-	data, err2 := csvReader.ReadAll()
+	data, err2 := CreateTable(csvReader)
 	if err2 != nil {
 		panic(err2)
 	}
@@ -66,13 +66,6 @@ func main() {
 		panic(err)
 	}
 	defer termbox.Close()
-
-	maxColumn := 0
-	for _, v1 := range data {
-		if maxColumn < len(v1) {
-			maxColumn = len(v1)
-		}
-	}
 
 	voffset := 0
 	hoffset := 0
@@ -87,14 +80,14 @@ func main() {
 				event.Key == termbox.KeyCtrlN || event.Key == termbox.KeyArrowDown ||
 				event.Key == termbox.KeyEnter {
 				voffset += 1
-				if voffset >= len(data) {voffset = len(data)-1}
+				if voffset >= data.GetMaxLine() {voffset = data.GetMaxLine()-1}
 				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('F') || event.Ch == rune('f') ||
 				event.Key == termbox.KeyCtrlV || event.Key == termbox.KeyCtrlF ||
 				event.Key == termbox.KeyPgdn {
 				_, termHeight := termbox.Size()
 				voffset += termHeight
-				if voffset >= len(data) {voffset = len(data)-1}
+				if voffset >= data.GetMaxLine() {voffset = data.GetMaxLine()-1}
 				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('k') || event.Ch == rune('p') ||
 				event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp  {
@@ -109,7 +102,7 @@ func main() {
 				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('l') || event.Key == termbox.KeyArrowRight {
 				hoffset += 1
-				if hoffset >= maxColumn {hoffset = maxColumn - 1}
+				if hoffset >= data.GetMaxColumn() {hoffset = data.GetMaxColumn() - 1}
 				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('h') || event.Key == termbox.KeyArrowLeft {
 				hoffset -= 1
@@ -121,7 +114,7 @@ func main() {
 				display(data, voffset, hoffset, *fixHeader)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
 				_, termHeight := termbox.Size()
-				voffset = len(data) - termHeight + 1
+				voffset = data.GetMaxLine() - termHeight + 1
 				display(data, voffset, hoffset, *fixHeader)
 			}
 		} else if event.Type == termbox.EventResize {
@@ -131,29 +124,29 @@ func main() {
 }
 
 
-func display(data [][]string, offset int, hoffset int, fixHeader bool) {
+func display(data Table, offset int, hoffset int, fixHeader bool) {
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
 	lastLine := offset + termHeight
-	if lastLine > len(data) {lastLine = len(data)}
+	if lastLine > data.GetMaxLine() {lastLine = data.GetMaxLine()}
 
 	showData := make([][]string, lastLine - offset)
 
 	if (fixHeader) {
-		showData[0] = data[0][hoffset:]
+		showData[0] = data.GetRow(0) [hoffset:]
 		for i := offset; i < lastLine-1; i++ {
-			showData[i - offset + 1] = data[i + 1][hoffset:]
+			showData[i - offset + 1] = data.GetRow(i + 1)[hoffset:]
 		}
 	} else {
 		for i := offset; i < lastLine; i++ {
-			showData[i - offset] = data[i][hoffset:]
+			showData[i - offset] = data.GetRow(i)[hoffset:]
 		}
 	}
 	
-	columnSize := make([]int, len(data[0]))
+	columnSize := make([]int, data.GetMaxColumn())
 
 	for _, v := range showData {
 		for j := 0; j < len(v); j++ {
@@ -194,7 +187,7 @@ func display(data [][]string, offset int, hoffset int, fixHeader bool) {
 	}
 
 	
-	status := fmt.Sprintf("(line: %d/%d   column: %d)", offset + 1, len(data), hoffset + 1)
+	status := fmt.Sprintf("(line: %d/%d   column: %d)", offset + 1, data.GetMaxLine(), hoffset + 1)
 	currentPos := 0
 	for _, v := range(status) {
 		termbox.SetCell(currentPos, termHeight, v, termbox.ColorGreen, termbox.ColorDefault)
