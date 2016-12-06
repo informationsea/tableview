@@ -1,9 +1,7 @@
 package main
 
 import (
-	"testing";
-	"encoding/csv"
-	"os"
+	"testing"
 )
 
 func CheckTestData1(table Table, t *testing.T) {
@@ -78,7 +76,7 @@ func CheckTestData1(table Table, t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	data, err1 := LoadTableFromFile("test1.csv")
+	data, err1 := LoadTableFromFile("test1.csv", "auto")
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -91,6 +89,18 @@ func TestCreateTable(t *testing.T) {
 
 func TestCreateTable2(t *testing.T) {
 	data, err1 := LoadTableFromFile("test1.txt", "auto")
+	
+	if err1 != nil {
+		t.Errorf("Cannot open file: %s", err1)
+		return
+	}
+	defer data.Close()
+
+	CheckTestData1(data, t)
+}
+
+func TestCreateTable3(t *testing.T) {
+	data, err1 := LoadTableFromFile("test1.xlsx", "auto")
 	
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
