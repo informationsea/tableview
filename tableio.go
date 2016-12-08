@@ -71,7 +71,7 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 
 	inputFile, err3 := os.Open(filename)
 	if err3 != nil {
-		panic(err3)
+		return nil, err3
 	}
 	
 	defer inputFile.Close()
