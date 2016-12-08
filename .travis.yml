@@ -1,6 +1,8 @@
 language: go
 go:
 - 1.7
+before_script:
+  - sed -i -e "s/@DEV@/$TRAVIS_TAG($TRAVIS_COMMIT)/" main.go
 before_install:
   - go get github.com/mitchellh/gox
 before_deploy:
