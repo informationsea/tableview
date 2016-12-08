@@ -8,12 +8,35 @@ import ("fmt";
 	"errors"
 )
 
+const VERSION = "@DEV@"
+
 func main() {
 	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
 	var fixHeader = flag.Bool("header", false, "Fix header line")
+	var showVersion = flag.Bool("version", false, "Show version")
+	var showHelp = flag.Bool("help", false, "Show help")
 	flag.Parse()
 
-	if len(flag.Args()) != 1 {
+	if *showVersion {
+		fmt.Printf("tableview : human friendly table viewer\nVersion: %s\n\n", VERSION)
+		fmt.Println("Copyright (C) 2016  OKAMURA, Yasunobu")
+		fmt.Println("")
+		fmt.Println("This program is free software: you can redistribute it and/or modify")
+		fmt.Println("it under the terms of the GNU General Public License as published by")
+		fmt.Println("the Free Software Foundation, either version 3 of the License, or")
+		fmt.Println("(at your option) any later version.")
+		fmt.Println("")
+		fmt.Println("This program is distributed in the hope that it will be useful,")
+		fmt.Println("but WITHOUT ANY WARRANTY; without even the implied warranty of")
+		fmt.Println("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+		fmt.Println("GNU General Public License for more details.")
+		fmt.Println("")
+		fmt.Println("You should have received a copy of the GNU General Public License")
+		fmt.Println("along with this program.  If not, see <http://www.gnu.org/licenses/>.")
+		os.Exit(0)
+	}
+
+	if *showHelp || len(flag.Args()) != 1 {
 		fmt.Println("tableview [-format FORMAT] FILE\n")
 		flag.PrintDefaults()
 		os.Exit(1)
