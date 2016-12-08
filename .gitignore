@@ -34,3 +34,6 @@ vendor/
 
 ## Libreoffice
 .~lock.*
+
+tableview
+tableview_*

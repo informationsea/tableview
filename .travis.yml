@@ -1,5 +1,25 @@
 language: go
-
 go:
-  - 1.7
-  - master
+- 1.7
+before_install:
+  - go get github.com/mitchellh/gox
+after_install:
+  - gox
+deploy:
+  provider: releases
+  api_key:
+    secure: lktyvGAhSqPuOb3uNOIhF0+kySnED4WiEUQKYuVI2mV9hB+s1FNqV3NVjwhSbWe4FWFcGxAIkMWLZbXZ0NjzZIXB9puaxn+Go1Ex+KFRyz7QKs+82DTbnj/76QxWJHY9V20x0T5yVSE3hX1YIFABG3zowk7mik8HxpI6ivlt+mKf22dyn97EUqe0yKwL3XTiVcSA0LzdPFSromKs//92KX8Z5nNLHdeHGsgY/GvThF8xmCO7gYz7GjeDyrycD9qMZp/LSNHNHcc7Hfn9Rk+y5v/jd7TBFf8tUDIZ9AFRnWlhgwEJ1W+UGIH4LkCbAm8rZ0Y4lsGPG4T4pVS8/kLy0RQv++JH6B4UMiZd0qDLvF0+tqKRAvbDtH6dFvWkOhqPRjQjah4VGmthS6/5s9MG/R+QfqZLAlGpxgfGJI0PFlBJb3lACfxDBACP+bH/BOGqeaeOhXsjWh9wq7QrIDWZHZew/cm3LFsUIvVNKym6ocMcPqNBjO/y2mMDNN49wwzWTZYEY7RucVtCefvdoLaUcDiiKi0wPFcHzVelJNe01w3OXhLQ4b9TibW/MD0NDX/U95H8CpvwqlGirYnFIBEpexiErwCz8N3F36pn8ztFEi9Znz1dmFxGIrY/DyHiZG46KmLlwEEG3HYqQh2RN95/fpuQ2hBcR5UdgHV4jFiYonc=
+  file:
+    - tableview_darwin_amd64
+    - tableview_freebsd_amd64
+    - tableview_linux_386
+    - tableview_linux_amd64
+    - tableview_linux_arm
+    - tableview_netbsd_386
+    - tableview_netbsd_amd64
+    - tableview_openbsd_386
+    - tableview_openbsd_amd64
+    - tableview_windows_386.exe
+    - tableview_windows_amd64.exe
+  on:
+    repo: informationsea/tableview
