@@ -21,7 +21,8 @@ func main() {
 
 	data, err2 := LoadTableFromFile(flag.Args()[0], *format)
 	if err2 != nil {
-		panic(err2)
+		fmt.Fprintf(os.Stderr, "Cannot load table file: %s\n", err2.Error())
+		os.Exit(1)
 	}
 	defer data.Close()
 
@@ -291,6 +292,8 @@ func (d *Display) GetDisplayData() [][]string {
 	return showData
 }
 
+var NUMBER_RE = regexp.MustCompile("^\\d+$")
+
 func (d *Display) Display() {
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
@@ -326,9 +329,16 @@ func (d *Display) Display() {
 				termbox.SetCell(currentPos + 1, i1, '|', termbox.ColorGreen, termbox.ColorDefault)
 				currentPos += 3
 			}
+			
+			if NUMBER_RE.MatchString(v2) {
+
+			}
 
 			width := displayWidth(v2)
-			currentPos += columnSize[i2] - width
+
+			if NUMBER_RE.MatchString(v2) {
+				currentPos += columnSize[i2] - width
+			}
 
 			var matches [][]int
 			if d.searchText != nil {
@@ -354,6 +364,10 @@ func (d *Display) Display() {
 				if termWidth < currentPos {
 					break
 				}
+			}
+
+			if ! NUMBER_RE.MatchString(v2) {
+				currentPos += columnSize[i2] - width
 			}
 		}
 	}
