@@ -4,6 +4,8 @@ import (
 	"errors";
 	"strings";
 	"github.com/tealeg/xlsx";
+	"io";
+	"bufio";
 	"os";
 	"encoding/csv"
 )
@@ -74,13 +76,17 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 	
 	defer inputFile.Close()
 
-	if format == "tsv" || format == "csv" {
-		csvReader := csv.NewReader(inputFile)
-		csvReader.LazyQuotes = true
-
-		if format == "tsv" {
-			csvReader.Comma = '\t'
+	if format == "tsv" {
+		data, err := LoadTSV(inputFile)
+		if err != nil {
+			return nil, err
 		}
+		
+		return CreateTable(data), nil
+	}
+
+	if format == "csv" {
+		csvReader := csv.NewReader(inputFile)
 
 		data, err := csvReader.ReadAll()
 		if err != nil {
@@ -91,6 +97,39 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 	}
 
 	return nil, errors.New("Unknown error")
+}
+
+func LoadTSV(reader io.Reader) ([][]string, error) {
+	data := make([][]string, 0)
+	
+	tabSplit := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		for i, v := range data {
+			if v == '\t' {
+				return i+1, data[:i], nil
+			}
+		}
+
+		return len(data), data, bufio.ErrFinalToken
+	}
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		tabScanner := bufio.NewScanner(strings.NewReader(line))
+		tabScanner.Split(tabSplit)
+		row := make([]string, 0)
+		for tabScanner.Scan() {
+			cell := tabScanner.Text()
+			row = append(row, cell)
+		}
+		data = append(data, row)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func CreateTable(data [][]string) Table {
