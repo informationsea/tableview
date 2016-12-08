@@ -23,3 +23,4 @@ deploy:
     - tableview_windows_amd64.exe
   on:
     repo: informationsea/tableview
+  skip_cleanup: true
