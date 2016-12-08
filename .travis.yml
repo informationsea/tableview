@@ -3,7 +3,7 @@ go:
 - 1.7
 before_install:
   - go get github.com/mitchellh/gox
-after_install:
+before_deploy:
   - gox
 deploy:
   provider: releases
