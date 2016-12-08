@@ -282,10 +282,10 @@ func (d *Display) GetDisplayData() [][]string {
 
 	showData := make([][]string, 0, lastLine - d.voffset)
 	if (d.fixHeader) {
-		showData = append(showData, d.data.GetRow(0))
+		showData = append(showData, d.data.GetRow(0)[d.hoffset:])
 	}
 	for i := firstLine; i < lastLine; i++ {
-		showData = append(showData, d.data.GetRow(i))
+		showData = append(showData, d.data.GetRow(i)[d.hoffset:])
 	}
 
 	return showData
