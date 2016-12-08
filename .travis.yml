@@ -3,6 +3,7 @@ go:
 - 1.7
 before_script:
   - sed -i -e "s/@DEV@/$TRAVIS_TAG($TRAVIS_COMMIT)/" main.go
+  - head -n12 main.go | tail -n3
 before_install:
   - go get github.com/mitchellh/gox
 before_deploy:
