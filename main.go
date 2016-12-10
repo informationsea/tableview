@@ -61,6 +61,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	//fmt.Println("Now loading...")
+
 	data, err2 := LoadTableFromFile(flag.Args()[0], *format)
 	if err2 != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load table file: %s\n", err2.Error())
@@ -84,13 +86,14 @@ type Display struct {
 	searchText *regexp.Regexp
 	voffset int
 	hoffset int
+	hoffset2 int
 	fixHeader bool
 	searchMatchedLine []int
 	currentMatchedLine int
 }
 
 func CreateDisplay(data Table, fixHeader bool) *Display {
-	return &Display{data, nil, 0, 0, fixHeader, make([]int, 0), 0}
+	return &Display{data, nil, 0, 0, 0, fixHeader, make([]int, 0), 0}
 }
 
 func (d *Display) WaitEvent() {
@@ -116,10 +119,22 @@ func (d *Display) WaitEvent() {
 				_, termHeight := termbox.Size()
 				d.Scroll(-termHeight, 0)
 			} else if event.Ch == rune('l') || event.Key == termbox.KeyArrowRight {
+				d.hoffset2 = 0
 				d.Scroll(0, 1)
 			} else if event.Ch == rune('h') || event.Key == termbox.KeyArrowLeft {
+				d.hoffset2 = 0
 				d.Scroll(0, -1)
+			} else if event.Ch == rune('[') {
+				d.hoffset2 -= 1
+				if d.hoffset2 < 0 {
+					d.hoffset2 = 0
+				}
+				d.Display()
+			} else if event.Ch == rune(']') {
+				d.hoffset2 += 1
+				d.Display()
 			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome {
+				d.hoffset2 = 0
 				d.ScrollTo(0, 0)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
 				_, termHeight := termbox.Size()
@@ -220,6 +235,10 @@ func (d *Display) ScrollTo(newVoffset int, newHoffset int) {
 }
 
 func (d *Display) ShowError(e string) {
+	d.ShowStatus(e, termbox.ColorRed)
+}
+
+func (d *Display) ShowStatus(e string, color termbox.Attribute) {
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 	for i := 0; i < termWidth; i++ {
@@ -227,7 +246,7 @@ func (d *Display) ShowError(e string) {
 	}
 
 	for i, v := range(e) {
-		termbox.SetCell(i, termHeight, v, termbox.ColorRed, termbox.ColorWhite)
+		termbox.SetCell(i, termHeight, v, color, termbox.ColorWhite)
 	}
 	termbox.SetCursor(len(e), termHeight)
 	termbox.Flush()
@@ -289,6 +308,8 @@ func (d *Display) ReadSearchText() bool {
 		d.searchText = nil
 		return false
 	}
+
+	d.ShowStatus("Now searching...", termbox.ColorBlue)
 	
 	reg, err2 := regexp.Compile(text)
 
@@ -374,7 +395,7 @@ func (d *Display) Display() {
 	i1 := 0
 	var v1 []string
 	for i1, v1 = range showData {
-		currentPos := 0
+		currentPos := -d.hoffset2
 		
 		for i2, v2 := range v1{
 			if i2 != 0 {
