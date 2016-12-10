@@ -334,7 +334,7 @@ func (d *Display) GetDisplayData() [][]string {
 	return showData
 }
 
-var NUMBER_RE = regexp.MustCompile("^\\d+$")
+var NUMBER_RE = regexp.MustCompile("^[\\d\\.-]+$")
 
 func (d *Display) Display() {
 	termWidth, termHeight := termbox.Size()

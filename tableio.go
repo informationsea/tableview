@@ -42,20 +42,24 @@ type SimpleTable struct {
 	MaxLine int
 }
 
+var TSV_FORMAT = []string{"txt", "tsv", "tdf", "bed", "sam", "gtf", "gff3", "vcf"}
+
 func LoadTableFromFile(filename string, format string) (Table, error) {
 	if (format == "auto") {
 		if strings.HasSuffix(filename, ".csv") {
 			format = "csv"
-		} else if strings.HasSuffix(filename, ".txt") {
-			format = "tsv"
-		} else if strings.HasSuffix(filename, ".tsv") {
-			format = "tsv"
-		} else if strings.HasSuffix(filename, ".tdf") {
-			format = "tsv"
 		} else if strings.HasSuffix(filename, ".xlsx") {
 			format = "xlsx"
 		} else {
-			return nil, errors.New("Cannot suggest format")
+			for _, v := range TSV_FORMAT {
+				if strings.HasSuffix(filename, "."+v) {
+					format = "tsv"
+				}
+			}
+			
+			if format == "auto" {
+				return nil, errors.New("Cannot suggest format. Please set -format option.")
+			}
 		}
 	} else if (format == "tdf") {
 		format = "tsv"
