@@ -58,7 +58,15 @@ func main() {
 	if *showHelp || len(flag.Args()) != 1 {
 		fmt.Println("tableview [-format FORMAT] FILE\n")
 		flag.PrintDefaults()
-		os.Exit(1)
+		fmt.Println()
+
+		if *showHelp {
+			for _, v := range HELP[4:] { fmt.Println(v[0]) }
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
+		
 	}
 
 	//fmt.Println("Now loading...")
@@ -81,6 +89,52 @@ func main() {
 	display.WaitEvent()
 }
 
+var HELP = [][]string{[]string{"tableview @DEV@"},
+	[]string{"Copyright (C) 2016 OKAMURA, Yasunobu"},
+	[]string{""},
+	[]string{""},
+	[]string{"Key Binding"},
+	[]string{""},
+	[]string{"  j, Ctrl-N, ARROW-DOWN, ENTER"},
+	[]string{"       Scroll forward 1 line"},
+	[]string{""},
+	[]string{"  k, Ctrl-P, ARROW-UP"},
+	[]string{"       Scroll back 1 line"},
+	[]string{""},
+	[]string{"  h, ARROW-LEFT"},
+	[]string{"       Scroll horizontally left 1 column"},
+	[]string{""},
+	[]string{"  l, ARROW-RIGHT"},
+	[]string{"       Scroll horizontally right 1 column"},
+	[]string{""},
+	[]string{"  f, Ctrl-V, SPACE, PageDown"},
+	[]string{"       Scroll forward 1 window"},
+	[]string{""},
+	[]string{"  ["},
+	[]string{"       Scroll horizontally left 1 character"},
+	[]string{""},
+	[]string{"  ]"},
+	[]string{"       Scroll horizontally right 1 character"},
+	[]string{""},
+	[]string{"  g, Home, <"},
+	[]string{"       Go to first line"},
+	[]string{""},
+	[]string{"  G, End, >"},
+	[]string{"       Go to last line"},
+	[]string{""},
+	[]string{"  /pattern"},
+	[]string{"       Search forward in the file"},
+	[]string{""},
+	[]string{"  n"},
+	[]string{"       Repeat previous search"},
+	[]string{""},
+	[]string{"  N"},
+	[]string{"       Repeat previous search, but in the reverse direction"},
+	[]string{""},
+	[]string{"  ?"},
+	[]string{"       Show this help"},
+}
+
 type Display struct {
 	data Table
 	searchText *regexp.Regexp
@@ -90,10 +144,11 @@ type Display struct {
 	fixHeader bool
 	searchMatchedLine []int
 	currentMatchedLine int
+	helpMode bool
 }
 
 func CreateDisplay(data Table, fixHeader bool) *Display {
-	return &Display{data, nil, 0, 0, 0, fixHeader, make([]int, 0), 0}
+	return &Display{data, nil, 0, 0, 0, fixHeader, make([]int, 0), 0, false}
 }
 
 func (d *Display) WaitEvent() {
@@ -108,7 +163,7 @@ func (d *Display) WaitEvent() {
 				d.Scroll(1, 0)
 			} else if event.Ch == rune('F') || event.Ch == rune('f') ||
 				event.Key == termbox.KeyCtrlV || event.Key == termbox.KeyCtrlF ||
-				event.Key == termbox.KeyPgdn {
+				event.Key == termbox.KeyPgdn || event.Key == termbox.KeySpace {
 				_, termHeight := termbox.Size()
 				d.Scroll(termHeight, 0)
 			} else if event.Ch == rune('k') || event.Ch == rune('p') ||
@@ -133,10 +188,10 @@ func (d *Display) WaitEvent() {
 			} else if event.Ch == rune(']') {
 				d.hoffset2 += 1
 				d.Display()
-			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome {
+			} else if event.Ch == rune('g') || event.Key == termbox.KeyHome || event.Ch == rune('<') {
 				d.hoffset2 = 0
 				d.ScrollTo(0, 0)
-			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd {
+			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd || event.Ch == rune('>') {
 				_, termHeight := termbox.Size()
 				d.voffset = d.data.GetMaxLine() - termHeight + 1
 				d.Display()
@@ -147,6 +202,14 @@ func (d *Display) WaitEvent() {
 				d.jumpSearchResultNext()
 			} else if event.Ch == rune('N') {
 				d.jumpSearchResultPrevious()
+			} else if event.Ch == rune('?') {
+				if !d.helpMode {
+					display := CreateDisplay(CreateTable(HELP), false)
+					display.helpMode = true
+					display.Display()
+					display.WaitEvent()
+					d.Display()
+				}
 			}
 		} else if event.Type == termbox.EventResize {
 			d.Display()
