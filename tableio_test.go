@@ -85,12 +85,14 @@ func CheckTestData1(table Table, t *testing.T) {
 		t.Error("Invalid data at 72,2")
 	}
 
-	if table.GetMaxColumn() != 3 {
-		t.Errorf("Invalid max column: %d", table.GetMaxColumn())
+	count, err := table.GetLineCountIfAvailable()
+
+	if err != nil {
+		t.Error("Cannot get line count")
 	}
 
-	if table.GetMaxLine() != 72 {
-		t.Errorf("Invalid max line: %d", table.GetMaxLine())
+	if count != 72 {
+		t.Errorf("Invalid max line: %d", count)
 	}
 }
 
@@ -168,12 +170,14 @@ func CheckTestData4(table Table, t *testing.T) {
 		t.Error("Invalid data at 72,2")
 	}
 
-	if table.GetMaxColumn() != 4 {
-		t.Errorf("Invalid max column: %d", table.GetMaxColumn())
+	count, err := table.GetLineCountIfAvailable()
+
+	if err != nil {
+		t.Error("Cannot get line count")
 	}
 
-	if table.GetMaxLine() != 72 {
-		t.Errorf("Invalid max line: %d", table.GetMaxLine())
+	if count != 72 {
+		t.Errorf("Invalid max line: %d", count)
 	}
 }
 

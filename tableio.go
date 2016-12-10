@@ -30,9 +30,11 @@ import (
 )
 
 type Table interface {
-	GetMaxColumn() int
-	GetMaxLine() int
-	GetRow(line int) []string
+	GetLineCountIfAvailable() (int, error)
+	GetLoadedLineCount() int
+	GetRow(int) []string
+	LoadAll()
+	Load(int)
 	Close()
 }
 
@@ -156,26 +158,16 @@ func LoadTSV(reader io.Reader) ([][]string, error) {
 }
 
 func CreateTable(data [][]string) Table {
-	
-	
 	table := &SimpleTable{data, 0, 0}
 	table.MaxLine = len(table.Data)
-	table.MaxColumn = 0
-	
-	for _, v := range table.Data {
-		if table.MaxColumn < len(v) {
-			table.MaxColumn = len(v)
-		}
-	}
-	
 	return table
 }
 
-func (v *SimpleTable) GetMaxColumn() int {
-	return v.MaxColumn
+func (v *SimpleTable) GetLineCountIfAvailable() (int, error) {
+	return v.MaxLine, nil
 }
 
-func (v *SimpleTable) GetMaxLine() int {
+func (v *SimpleTable) GetLoadedLineCount() int {
 	return v.MaxLine
 }
 
@@ -184,5 +176,13 @@ func (v *SimpleTable) GetRow(line int) []string {
 }
 
 func (v *SimpleTable) Close() {
+	// do nothing
+}
+
+func (v *SimpleTable)  LoadAll() {
+	// do nothing
+}
+
+func (v *SimpleTable)  Load(line int) {
 	// do nothing
 }
