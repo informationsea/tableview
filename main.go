@@ -25,17 +25,40 @@ import ("fmt";
 	"github.com/nsf/termbox-go";
 	"regexp";
 	"errors";
-	"encoding/csv"
+	"encoding/csv";
+	"strings"
 )
 
 const VERSION = "@DEV@"
+
+func ShowLicense() {
+	license, _ := Asset("LICENSE")
+	reader := strings.NewReader(string(license))
+	data := CreatePartialTable(reader, ParseTSVRecord)
+	display := CreateDisplay(data, false)
+	display.helpMode = true
+	display.loadAllData()
+	display.Display()
+	display.WaitEvent()
+}
 
 func main() {
 	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
 	var fixHeader = flag.Bool("header", false, "Fix header line")
 	var showVersion = flag.Bool("version", false, "Show version")
+	var showLicense = flag.Bool("license", false, "Show license")
 	var showHelp = flag.Bool("help", false, "Show help")
 	flag.Parse()
+
+	if *showLicense {
+				err := termbox.Init()
+		if err != nil {
+			panic(err)
+		}
+		defer termbox.Close()
+		ShowLicense()
+		os.Exit(0)
+	}
 
 	if *showVersion {
 		fmt.Printf("tableview : human friendly table viewer\nVersion: %s\n\n", VERSION)
@@ -147,6 +170,9 @@ var HELP = [][]string{[]string{"tableview @DEV@"},
 	[]string{""},
 	[]string{"  ?"},
 	[]string{"       Show this help"},
+	[]string{""},
+	[]string{"  L"},
+	[]string{"       Show license"},
 }
 
 type Display struct {
@@ -233,6 +259,9 @@ func (d *Display) WaitEvent() {
 					display.WaitEvent()
 					d.Display()
 				}
+			} else if event.Ch == rune('L') {
+				ShowLicense()
+				d.Display()
 			}
 		} else if event.Type == termbox.EventResize {
 			d.Display()
