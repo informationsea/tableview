@@ -193,6 +193,7 @@ func (d *Display) WaitEvent() {
 				d.ScrollTo(0, 0)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd || event.Ch == rune('>') {
 				_, termHeight := termbox.Size()
+				d.ShowStatus("Now loading...", termbox.ColorBlue)
 				d.data.LoadAll()
 				count, err := d.data.GetLineCountIfAvailable()
 				if err != nil {
@@ -378,7 +379,7 @@ func (d *Display) ReadSearchText() bool {
 		return false
 	}
 
-	d.ShowStatus("Now searching...", termbox.ColorBlue)
+	
 	
 	reg, err2 := regexp.Compile(text)
 
@@ -391,7 +392,9 @@ func (d *Display) ReadSearchText() bool {
 	d.searchText = reg
 	d.searchMatchedLine = make([]int, 0)
 	d.currentMatchedLine = -1
+	d.ShowStatus("Now loading...", termbox.ColorBlue)
 	d.data.LoadAll()
+	d.ShowStatus("Now searching...", termbox.ColorBlue)
 	for i := 0; i < d.data.GetLoadedLineCount(); i++ {
 		for _, c := range d.data.GetRow(i) {
 			if d.searchText.FindString(c) != "" {

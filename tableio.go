@@ -1,5 +1,5 @@
 /*
-    tableview: human friendly table viewer
+    table view: human friendly table viewer
    
     Copyright (C) 2016  OKAMURA, Yasunobu
 
@@ -26,7 +26,8 @@ import (
 	"io";
 	"bufio";
 	"os";
-	"encoding/csv"
+	"encoding/csv";
+	"fmt"
 )
 
 type Table interface {
@@ -40,8 +41,6 @@ type Table interface {
 
 type SimpleTable struct {
 	Data [][]string
-	MaxColumn int
-	MaxLine int
 }
 
 var TSV_FORMAT = []string{"txt", "tsv", "tdf", "bed", "sam", "gtf", "gff3", "vcf"}
@@ -99,15 +98,10 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 		return nil, err3
 	}
 	
-	defer inputFile.Close()
+	//defer inputFile.Close()
 
 	if format == "tsv" {
-		data, err := LoadTSV(inputFile)
-		if err != nil {
-			return nil, err
-		}
-		
-		return CreateTable(data), nil
+		return CreateParialTable(inputFile, ParseTSVRecord), nil
 	}
 
 	if format == "csv" {
@@ -124,51 +118,17 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 	return nil, errors.New("Unknown error")
 }
 
-func LoadTSV(reader io.Reader) ([][]string, error) {
-	data := make([][]string, 0)
-	
-	tabSplit := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		for i, v := range data {
-			if v == '\t' {
-				return i+1, data[:i], nil
-			}
-		}
-
-		return len(data), data, bufio.ErrFinalToken
-	}
-
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		tabScanner := bufio.NewScanner(strings.NewReader(line))
-		tabScanner.Split(tabSplit)
-		row := make([]string, 0)
-		for tabScanner.Scan() {
-			cell := tabScanner.Text()
-			row = append(row, cell)
-		}
-		data = append(data, row)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
 func CreateTable(data [][]string) Table {
-	table := &SimpleTable{data, 0, 0}
-	table.MaxLine = len(table.Data)
+	table := &SimpleTable{data}
 	return table
 }
 
 func (v *SimpleTable) GetLineCountIfAvailable() (int, error) {
-	return v.MaxLine, nil
+	return len(v.Data), nil
 }
 
 func (v *SimpleTable) GetLoadedLineCount() int {
-	return v.MaxLine
+	return len(v.Data)
 }
 
 func (v *SimpleTable) GetRow(line int) []string {
@@ -185,4 +145,157 @@ func (v *SimpleTable)  LoadAll() {
 
 func (v *SimpleTable)  Load(line int) {
 	// do nothing
+}
+
+type ParseFinishError struct {}
+func (p ParseFinishError) Error() string {
+	return "Finished"
+}
+
+type ParseRecordFunc func(data string, atEOF bool) ([]string, string, error)
+
+func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
+
+	lineEnd := strings.Index(data, "\r\n")
+
+	if lineEnd < 0 {
+		lineEnd = strings.Index(data, "\n")
+	}
+
+	if lineEnd < 0 {
+		if atEOF {
+			return strings.Split(data, "\t"), "", ParseFinishError{}
+		} else {
+			//fmt.Fprintf(os.Stderr, "Line separator is not found", data)
+			return nil, data, nil
+		}
+	} else {
+		return strings.Split(data[:lineEnd], "\t"), data[lineEnd+1:], nil
+	}
+}
+
+type PartialTable struct {
+	reader io.Reader
+	nextData chan []string
+	errChan chan error
+	data [][]string
+	finish bool
+	err error
+}
+
+func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
+	nextData := make(chan []string, 100)
+	errChan := make(chan error)
+
+	go func() {
+		defer close(nextData)
+		defer close(errChan)
+		scanner := bufio.NewScanner(reader)
+
+		unprocessedData := ""
+		for scanner.Scan() {
+			unprocessedData += scanner.Text() + "\n"
+			//fmt.Fprintf(os.Stderr, "process data: %s\n", unprocessedData)
+			data, notProcessed, err := parser(unprocessedData, false)
+			unprocessedData = notProcessed
+			if data != nil {
+				//fmt.Fprintf(os.Stderr, "Next data1 %s\n", data)
+				nextData <- data
+			}
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error %s", err.Error())
+				errChan <- err
+				return
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			errChan <- err
+			return
+		}
+
+		// TODO' loop until finish here
+		for len(unprocessedData) > 0 {
+			data, notProcessed, err := parser(unprocessedData, true)
+			unprocessedData = notProcessed
+			if data != nil {
+				//fmt.Fprintf(os.Stderr, "Next data2 %s\n", data)
+				nextData <- data
+			}
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error %s", err.Error())
+				errChan <- err
+				return
+			}
+		}
+	}()
+	
+	return &PartialTable{reader, nextData, errChan, make([][]string, 0), false, nil}
+}
+
+func (p *PartialTable) loadAvailable() {
+	//fmt.Fprintf(os.Stderr, "loadAvailable\n")
+	if p.finish {
+		return
+	}
+	
+	available := len(p.nextData)
+	for i := 0; i < available; i++ {
+		p.data = append(p.data, <- p.nextData)
+	}
+	//fmt.Fprintf(os.Stderr, "loaded 1 %d\n", len(p.data))
+}
+
+func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
+	//fmt.Fprintf(os.Stderr, "GetLineCountIfAvailable\n")
+	p.loadAvailable()
+	if p.finish {
+		return len(p.data), nil
+	} else {
+		return -1, errors.New("Not finished")
+	}
+}
+
+func (p *PartialTable) GetLoadedLineCount() int {
+	//fmt.Fprintf(os.Stderr, "GetLoadedLineCount\n")
+	p.loadAvailable()
+	return len(p.data)
+}
+
+func (p *PartialTable) GetRow(line int) []string {
+	//fmt.Fprintf(os.Stderr, "GetRow: %d\n", line)
+	p.Load(line)
+	return p.data[line]
+}
+
+func (p *PartialTable) LoadAll() {
+	//fmt.Fprintf(os.Stderr, "LoadAll\n")
+	for v := range p.nextData {
+		p.data = append(p.data, v)
+	}
+	// fmt.Fprintf(os.Stderr, "loaded 2 %d\n", len(p.data))
+	p.finish = true
+}
+
+func (p *PartialTable) Load(line int) {
+	//fmt.Fprintf(os.Stderr, "Load: %d\n", line)
+	if len(p.data) > line {
+		//fmt.Fprintf(os.Stderr, "loaded 3 %d/%d\n", line, len(p.data))
+		return
+	}
+	
+	for v := range p.nextData {
+		p.data = append(p.data, v)
+		if len(p.data) > line {
+			//fmt.Fprintf(os.Stderr, "loaded 4 %d/%d\n", line, len(p.data))
+			return
+		}
+	}
+	//fmt.Fprintf(os.Stderr, "loaded 5 %d/%d\n", line, len(p.data))
+
+	p.finish = true
+}
+
+func (p *PartialTable) Close() {
+	
 }
