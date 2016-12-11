@@ -155,18 +155,12 @@ func (p ParseFinishError) Error() string {
 type ParseRecordFunc func(data string, atEOF bool) ([]string, string, error)
 
 func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
-
-	lineEnd := strings.Index(data, "\r\n")
-
-	if lineEnd < 0 {
-		lineEnd = strings.Index(data, "\n")
-	}
+	lineEnd := strings.Index(data, "\n")
 
 	if lineEnd < 0 {
 		if atEOF {
 			return strings.Split(data, "\t"), "", ParseFinishError{}
 		} else {
-			//fmt.Fprintf(os.Stderr, "Line separator is not found", data)
 			return nil, data, nil
 		}
 	} else {
@@ -195,11 +189,9 @@ func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 		unprocessedData := ""
 		for scanner.Scan() {
 			unprocessedData += scanner.Text() + "\n"
-			//fmt.Fprintf(os.Stderr, "process data: %s\n", unprocessedData)
 			data, notProcessed, err := parser(unprocessedData, false)
 			unprocessedData = notProcessed
 			if data != nil {
-				//fmt.Fprintf(os.Stderr, "Next data1 %s\n", data)
 				nextData <- data
 			}
 			if err != nil {
@@ -214,12 +206,10 @@ func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 			return
 		}
 
-		// TODO' loop until finish here
 		for len(unprocessedData) > 0 {
 			data, notProcessed, err := parser(unprocessedData, true)
 			unprocessedData = notProcessed
 			if data != nil {
-				//fmt.Fprintf(os.Stderr, "Next data2 %s\n", data)
 				nextData <- data
 			}
 			if err != nil {
@@ -234,7 +224,6 @@ func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 }
 
 func (p *PartialTable) loadAvailable() {
-	//fmt.Fprintf(os.Stderr, "loadAvailable\n")
 	if p.finish {
 		return
 	}
@@ -243,11 +232,9 @@ func (p *PartialTable) loadAvailable() {
 	for i := 0; i < available; i++ {
 		p.data = append(p.data, <- p.nextData)
 	}
-	//fmt.Fprintf(os.Stderr, "loaded 1 %d\n", len(p.data))
 }
 
 func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
-	//fmt.Fprintf(os.Stderr, "GetLineCountIfAvailable\n")
 	p.loadAvailable()
 	if p.finish {
 		return len(p.data), nil
@@ -257,42 +244,33 @@ func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
 }
 
 func (p *PartialTable) GetLoadedLineCount() int {
-	//fmt.Fprintf(os.Stderr, "GetLoadedLineCount\n")
 	p.loadAvailable()
 	return len(p.data)
 }
 
 func (p *PartialTable) GetRow(line int) []string {
-	//fmt.Fprintf(os.Stderr, "GetRow: %d\n", line)
 	p.Load(line)
 	return p.data[line]
 }
 
 func (p *PartialTable) LoadAll() {
-	//fmt.Fprintf(os.Stderr, "LoadAll\n")
 	for v := range p.nextData {
 		p.data = append(p.data, v)
 	}
-	// fmt.Fprintf(os.Stderr, "loaded 2 %d\n", len(p.data))
 	p.finish = true
 }
 
 func (p *PartialTable) Load(line int) {
-	//fmt.Fprintf(os.Stderr, "Load: %d\n", line)
 	if len(p.data) > line {
-		//fmt.Fprintf(os.Stderr, "loaded 3 %d/%d\n", line, len(p.data))
 		return
 	}
 	
 	for v := range p.nextData {
 		p.data = append(p.data, v)
 		if len(p.data) > line {
-			//fmt.Fprintf(os.Stderr, "loaded 4 %d/%d\n", line, len(p.data))
 			return
 		}
 	}
-	//fmt.Fprintf(os.Stderr, "loaded 5 %d/%d\n", line, len(p.data))
-
 	p.finish = true
 }
 
