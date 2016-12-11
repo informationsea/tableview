@@ -24,7 +24,8 @@ import ("fmt";
 	"flag";
 	"github.com/nsf/termbox-go";
 	"regexp";
-	"errors"
+	"errors";
+	"encoding/csv"
 )
 
 const VERSION = "@DEV@"
@@ -55,8 +56,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *showHelp || len(flag.Args()) != 1 {
-		fmt.Println("tableview [-format FORMAT] FILE\n")
+	if *showHelp || len(flag.Args()) > 1 {
+		fmt.Println("tableview [-format FORMAT] [FILE]\n")
 		flag.PrintDefaults()
 		fmt.Println()
 
@@ -70,15 +71,28 @@ func main() {
 	}
 
 	//fmt.Println("Now loading...")
+	var data Table
+	var err error
 
-	data, err2 := LoadTableFromFile(flag.Args()[0], *format)
-	if err2 != nil {
-		fmt.Fprintf(os.Stderr, "Cannot load table file: %s\n", err2.Error())
+	if len(flag.Args()) == 0 {
+		if *format == "csv" {
+			csvReader := csv.NewReader(os.Stdin)
+			data = CreatePartialCSV(csvReader)
+		} else {
+			data = CreatePartialTable(os.Stdin, ParseTSVRecord)
+		}
+	} else {
+		data, err = LoadTableFromFile(flag.Args()[0], *format)
+	}
+	
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot load table file: %s\n", err.Error())
 		os.Exit(1)
 	}
+	
 	defer data.Close()
 
-	err := termbox.Init()
+	err = termbox.Init()
 	if err != nil {
 		panic(err)
 	}
@@ -378,8 +392,6 @@ func (d *Display) ReadSearchText() bool {
 		d.searchText = nil
 		return false
 	}
-
-	
 	
 	reg, err2 := regexp.Compile(text)
 
