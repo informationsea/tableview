@@ -27,7 +27,7 @@ import (
 
 func CheckTestData1(table Table, t *testing.T) {
 	if table.GetRow(0)[0] != "Header 1" {
-		t.Error("Invalid data at 0,0")
+		t.Error("Invalid data at 0,0: %s", table.GetRow(0)[0])
 	}
 
 	if table.GetRow(0)[1] != "Header 2" {

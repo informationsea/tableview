@@ -27,7 +27,9 @@ import (
 	"bufio";
 	"os";
 	"encoding/csv";
-	"fmt"
+	"fmt";
+	"compress/gzip";
+	"compress/bzip2"
 )
 
 type Table interface {
@@ -46,31 +48,7 @@ type SimpleTable struct {
 var TSV_FORMAT = []string{"txt", "tsv", "tdf", "bed", "sam", "gtf", "gff3", "vcf"}
 
 func LoadTableFromFile(filename string, format string) (Table, error) {
-	if (format == "auto") {
-		if strings.HasSuffix(filename, ".csv") {
-			format = "csv"
-		} else if strings.HasSuffix(filename, ".xlsx") {
-			format = "xlsx"
-		} else {
-			for _, v := range TSV_FORMAT {
-				if strings.HasSuffix(filename, "."+v) {
-					format = "tsv"
-				}
-			}
-			
-			if format == "auto" {
-				return nil, errors.New("Cannot suggest format. Please set -format option.")
-			}
-		}
-	} else if (format == "tdf") {
-		format = "tsv"
-	} else if (format == "csv" || format == "tsv" || format == "xlsx") {
-		// ignore
-	} else {
-		return nil, errors.New("Invalid format")
-	}
-
-	if (format == "xlsx") {
+	if format == "xlsx" || (strings.HasSuffix(filename, ".xlsx") && format == "auto") {
 		xlFile, err := xlsx.OpenFile(filename)
 		if err != nil {
 			panic(err)
@@ -93,19 +71,47 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 		return CreateTable(data), nil
 	}
 
-	inputFile, err3 := os.Open(filename)
-	if err3 != nil {
-		return nil, err3
+	var reader io.Reader
+	var err error
+	reader, err = os.Open(filename)
+	if err != nil {
+		return nil, err
 	}
+
+	if strings.HasSuffix(filename, ".gz") {
+		reader, err = gzip.NewReader(reader)
+		if err != nil {
+			return nil, err
+		}
+		filename = filename[:len(filename)-3]
+	}
+
+	if strings.HasSuffix(filename, ".bz2") {
+		reader = bzip2.NewReader(reader)
+		filename = filename[:len(filename)-4]
+	}
+
 	
+	if (format == "auto") {
+		if strings.HasSuffix(filename, ".csv") {
+			format = "csv"
+		} else {
+			format = "tsv"
+		}
+	} else if (format == "tdf") {
+		format = "tsv"
+	} else if (format == "csv" || format == "tsv") {
+		// ignore
+	} else {
+		return nil, errors.New("Invalid format")
+	}
+		
 	//defer inputFile.Close()
 
 	if format == "tsv" {
-		return CreatePartialTable(inputFile, ParseTSVRecord), nil
-	}
-
-	if format == "csv" {
-		csvReader := csv.NewReader(inputFile)
+		return CreatePartialTable(reader, ParseTSVRecord), nil
+	} else if format == "csv" {
+		csvReader := csv.NewReader(reader)
 		return CreatePartialCSV(csvReader), nil
 	}
 
