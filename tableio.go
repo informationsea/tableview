@@ -232,7 +232,7 @@ func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
 }
 
 func (p *PartialTable) GetLoadedLineCount() int {
-	return len(p.data)
+	return len(p.data) + len(p.nextData)
 }
 
 func (p *PartialTable) GetRow(line int) []string {
