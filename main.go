@@ -537,7 +537,7 @@ func (d *Display) Display() {
 		status = fmt.Sprintf("(line: %d/%d   column: %d/%d%s)", d.voffset + 1, count,
 			d.hoffset + 1, len(columnSize) + d.hoffset, searchStatus)
 	} else {
-		status = fmt.Sprintf("(line: %d/?   column: %d/%d%s)", d.voffset + 1, 
+		status = fmt.Sprintf("(line: %d/%d+   column: %d/%d%s)", d.voffset + 1, d.data.GetLoadedLineCount(),
 			d.hoffset + 1, len(columnSize) + d.hoffset, searchStatus)
 	}
 	

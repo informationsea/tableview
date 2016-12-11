@@ -178,7 +178,7 @@ type PartialTable struct {
 }
 
 func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
-	nextData := make(chan []string, 100)
+	nextData := make(chan []string, 1000)
 	errChan := make(chan error)
 
 	go func() {
@@ -223,19 +223,7 @@ func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 	return &PartialTable{reader, nextData, errChan, make([][]string, 0), false, nil}
 }
 
-func (p *PartialTable) loadAvailable() {
-	if p.finish {
-		return
-	}
-	
-	available := len(p.nextData)
-	for i := 0; i < available; i++ {
-		p.data = append(p.data, <- p.nextData)
-	}
-}
-
 func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
-	p.loadAvailable()
 	if p.finish {
 		return len(p.data), nil
 	} else {
@@ -244,7 +232,6 @@ func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
 }
 
 func (p *PartialTable) GetLoadedLineCount() int {
-	p.loadAvailable()
 	return len(p.data)
 }
 
