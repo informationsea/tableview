@@ -87,7 +87,7 @@ func CheckTestData1(table Table, t *testing.T) {
 		t.Error("Invalid data at 72,2")
 	}
 
-	table.LoadAll()
+	table.LoadAll(1000)
 	count, err := table.GetLineCountIfAvailable()
 
 	if err != nil {
@@ -173,7 +173,7 @@ func CheckTestData4(table Table, t *testing.T) {
 		t.Error("Invalid data at 72,2")
 	}
 
-	table.LoadAll()
+	table.LoadAll(1000)
 	count, err := table.GetLineCountIfAvailable()
 
 	if err != nil {
@@ -258,7 +258,6 @@ func TestPartialTable1(t *testing.T) {
 	table := CreatePartialTable(input, ParseTSVRecord)
 	
 	defer table.Close()
-	table.LoadAll()
 	CheckTestData3(table, t)
 }
 
@@ -274,7 +273,6 @@ func TestPartialTable1CSV(t *testing.T) {
 	table := CreatePartialCSV(csvReader)
 	
 	defer table.Close()
-	table.LoadAll()
 	CheckTestData1(table, t)
 }
 
@@ -390,7 +388,7 @@ func CheckTestData3(table Table, t *testing.T) {
 		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(5)))
 	}
 
-	table.LoadAll()
+	table.LoadAll(1000)
 	count, err := table.GetLineCountIfAvailable()
 
 	if err != nil {

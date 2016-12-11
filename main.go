@@ -207,14 +207,17 @@ func (d *Display) WaitEvent() {
 				d.ScrollTo(0, 0)
 			} else if event.Ch == rune('G') || event.Key == termbox.KeyEnd || event.Ch == rune('>') {
 				_, termHeight := termbox.Size()
-				d.ShowStatus("Now loading...", termbox.ColorBlue)
-				d.data.LoadAll()
-				count, err := d.data.GetLineCountIfAvailable()
+				err := d.loadAllData()
 				if err != nil {
-					panic("Cannot get line count")
+					d.ShowStatus("Canceled by user", termbox.ColorBlue)
+				} else {
+					count, err2 := d.data.GetLineCountIfAvailable()
+					if err2 != nil {
+						panic("Cannot get line count")
+					}
+					d.voffset = count - termHeight + 1
+					d.Display()
 				}
-				d.voffset = count - termHeight + 1
-				d.Display()
 			} else if event.Ch == rune('/') {
 				d.ReadSearchText()
 				d.Display()
@@ -235,6 +238,49 @@ func (d *Display) WaitEvent() {
 			d.Display()
 		}
 	}
+}
+
+func (d *Display) loadAllData() error {
+	_, err := d.data.GetLineCountIfAvailable()
+	if err == nil {
+		return nil
+	}
+	
+	d.ShowStatus("Now loading...", termbox.ColorBlue)
+	finish := make(chan bool)
+	cancel := make(chan bool)
+
+	go func() {
+		for ! d.data.LoadAll(1000) {
+			select {
+			case <- cancel:
+				finish <- false
+				return
+			default:
+				// do nothing
+			}
+		}
+		finish <- true
+	}()
+
+	go func() {
+		for {
+			event := termbox.PollEvent()
+			if event.Type == termbox.EventKey {
+				if event.Key == termbox.KeyEsc || event.Key == termbox.KeyCtrlC {
+					break
+				}
+			}
+		}
+		cancel <- true
+	}()
+
+	status := <- finish
+	if status {
+		termbox.Interrupt()
+		return nil
+	}
+	return errors.New("Interrupt")
 }
 
 func (d *Display) jumpSearchResultNext() {
@@ -404,8 +450,13 @@ func (d *Display) ReadSearchText() bool {
 	d.searchText = reg
 	d.searchMatchedLine = make([]int, 0)
 	d.currentMatchedLine = -1
-	d.ShowStatus("Now loading...", termbox.ColorBlue)
-	d.data.LoadAll()
+
+	err := d.loadAllData()
+	if err != nil {
+		d.ShowStatus("Canceled by user", termbox.ColorBlue)
+		return false
+	}
+
 	d.ShowStatus("Now searching...", termbox.ColorBlue)
 	for i := 0; i < d.data.GetLoadedLineCount(); i++ {
 		for _, c := range d.data.GetRow(i) {

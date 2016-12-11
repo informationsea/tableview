@@ -29,15 +29,16 @@ import (
 	"encoding/csv";
 	"fmt";
 	"compress/gzip";
-	"compress/bzip2"
+	"compress/bzip2";
+	"time"
 )
 
 type Table interface {
 	GetLineCountIfAvailable() (int, error)
 	GetLoadedLineCount() int
 	GetRow(int) []string
-	LoadAll()
-	Load(int)
+	LoadAll(timeout int) bool
+	Load(line int)
 	Close()
 }
 
@@ -139,8 +140,9 @@ func (v *SimpleTable) Close() {
 	// do nothing
 }
 
-func (v *SimpleTable)  LoadAll() {
+func (v *SimpleTable)  LoadAll(timeout int) bool {
 	// do nothing
+	return true
 }
 
 func (v *SimpleTable)  Load(line int) {
@@ -261,11 +263,17 @@ func (p *PartialTable) GetRow(line int) []string {
 	return p.data[line]
 }
 
-func (p *PartialTable) LoadAll() {
+func (p *PartialTable) LoadAll(timeout int) bool {
+	start := time.Now()
 	for v := range p.nextData {
 		p.data = append(p.data, v)
+		d := time.Since(start)
+		if d.Nanoseconds() > int64(timeout)*1000 {
+			return false
+		}
 	}
 	p.finish = true
+	return true
 }
 
 func (p *PartialTable) Load(line int) {
