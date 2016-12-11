@@ -470,6 +470,10 @@ func (d *Display) Display() {
 		return
 	}
 
+	if columnSize[0] <= d.hoffset2 {
+		d.hoffset2 = columnSize[0] - 1
+	}
+
 	termbox.SetCursor(0, 0)
 
 	i1 := 0
@@ -514,7 +518,8 @@ func (d *Display) Display() {
 				}
 				
 				currentPos += displayWidthChar(v3)
-				if termWidth < currentPos {
+				if termWidth <= currentPos + 1 {
+					termbox.SetCell(termWidth-1, i1, '>', termbox.ColorRed, termbox.ColorDefault)
 					break
 				}
 			}
