@@ -172,6 +172,7 @@ func CheckTestData4(table Table, t *testing.T) {
 		t.Error("Invalid data at 72,2")
 	}
 
+	table.LoadAll()
 	count, err := table.GetLineCountIfAvailable()
 
 	if err != nil {
@@ -185,7 +186,7 @@ func CheckTestData4(table Table, t *testing.T) {
 
 
 func TestCreateTable(t *testing.T) {
-	data, err1 := LoadTableFromFile("test1.csv", "auto")
+	data, err1 := LoadTableFromFile("testdata/test1.csv", "auto")
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -196,20 +197,8 @@ func TestCreateTable(t *testing.T) {
 	CheckTestData1(data, t)
 }
 
-//func TestCreateTable2(t *testing.T) {
-//	data, err1 := LoadTableFromFile("test1.txt", "auto")
-//	
-//	if err1 != nil {
-//		t.Errorf("Cannot open file: %s", err1)
-//		return
-//	}
-//	defer data.Close()
-//
-//	CheckTestData1(data, t)
-//}
-
-func TestCreateTable3(t *testing.T) {
-	data, err1 := LoadTableFromFile("test1.xlsx", "auto")
+func TestCreateTable2(t *testing.T) {
+	data, err1 := LoadTableFromFile("testdata/test1.txt", "auto")
 	
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -220,20 +209,32 @@ func TestCreateTable3(t *testing.T) {
 	CheckTestData1(data, t)
 }
 
-//func TestCreateTable4(t *testing.T) {
-//	data, err1 := LoadTableFromFile("test4.tsv", "auto")
-//	
-//	if err1 != nil {
-//		t.Errorf("Cannot open file: %s", err1)
-//		return
-//	}
-//	defer data.Close()
-//
-//	CheckTestData4(data, t)
-//}
+func TestCreateTable3(t *testing.T) {
+	data, err1 := LoadTableFromFile("testdata/test1.xlsx", "auto")
+	
+	if err1 != nil {
+		t.Errorf("Cannot open file: %s", err1)
+		return
+	}
+	defer data.Close()
+
+	CheckTestData1(data, t)
+}
+
+func TestCreateTable4(t *testing.T) {
+	data, err1 := LoadTableFromFile("testdata/test4.tsv", "auto")
+	
+	if err1 != nil {
+		t.Errorf("Cannot open file: %s", err1)
+		return
+	}
+	defer data.Close()
+
+	CheckTestData4(data, t)
+}
 
 func TestCreateTable5(t *testing.T) {
-	data, err1 := LoadTableFromFile("test3.txt", "auto")
+	data, err1 := LoadTableFromFile("testdata/test3.txt", "auto")
 	
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -246,7 +247,7 @@ func TestCreateTable5(t *testing.T) {
 
 
 func TestPartialTable1(t *testing.T) {
-	input, err := os.Open("test3.txt")
+	input, err := os.Open("testdata/test3.txt")
 	
 	if err != nil {
 		t.Errorf("Cannot open file: %s", err)
@@ -261,7 +262,7 @@ func TestPartialTable1(t *testing.T) {
 }
 
 func TestPartialTable2(t *testing.T) {
-	input, err := os.Open("test1.txt")
+	input, err := os.Open("testdata/test1.txt")
 	
 	if err != nil {
 		t.Errorf("Cannot open file: %s", err)
