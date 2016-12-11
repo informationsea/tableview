@@ -5,6 +5,8 @@ tableview
 
 Format CSV or TSV, xlsx file as human readable table
 
+![Screen Shot](./demo.gif)
+
 Download
 --------
 
