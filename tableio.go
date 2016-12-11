@@ -101,18 +101,12 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 	//defer inputFile.Close()
 
 	if format == "tsv" {
-		return CreateParialTable(inputFile, ParseTSVRecord), nil
+		return CreatePartialTable(inputFile, ParseTSVRecord), nil
 	}
 
 	if format == "csv" {
 		csvReader := csv.NewReader(inputFile)
-
-		data, err := csvReader.ReadAll()
-		if err != nil {
-			return nil, err
-		}
-		
-		return CreateTable(data), nil
+		return CreatePartialCSV(csvReader), nil
 	}
 
 	return nil, errors.New("Unknown error")
@@ -169,7 +163,6 @@ func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
 }
 
 type PartialTable struct {
-	reader io.Reader
 	nextData chan []string
 	errChan chan error
 	data [][]string
@@ -177,7 +170,29 @@ type PartialTable struct {
 	err error
 }
 
-func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
+func CreatePartialCSV(reader *csv.Reader) *PartialTable {
+	nextData := make(chan []string, 1000)
+	errChan := make(chan error)
+
+	go func() {
+		defer close(nextData)
+		defer close(errChan)
+
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {break}
+			if err != nil {
+				errChan <- err
+				return
+			}
+			nextData <- record
+		}
+	}()
+
+	return &PartialTable{nextData, errChan, make([][]string, 0), false, nil}
+}
+
+func CreatePartialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 	nextData := make(chan []string, 1000)
 	errChan := make(chan error)
 
@@ -220,7 +235,7 @@ func CreateParialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
 		}
 	}()
 	
-	return &PartialTable{reader, nextData, errChan, make([][]string, 0), false, nil}
+	return &PartialTable{nextData, errChan, make([][]string, 0), false, nil}
 }
 
 func (p *PartialTable) GetLineCountIfAvailable() (int, error) {

@@ -21,7 +21,8 @@ package main
 
 import (
 	"testing";
-	"os"
+	"os";
+	"encoding/csv"
 )
 
 func CheckTestData1(table Table, t *testing.T) {
@@ -254,12 +255,29 @@ func TestPartialTable1(t *testing.T) {
 		return
 	}
 
-	table := CreateParialTable(input, ParseTSVRecord)
+	table := CreatePartialTable(input, ParseTSVRecord)
 	
 	defer table.Close()
 	table.LoadAll()
 	CheckTestData3(table, t)
 }
+
+func TestPartialTable1CSV(t *testing.T) {
+	input, err := os.Open("testdata/test1.csv")
+	
+	if err != nil {
+		t.Errorf("Cannot open file: %s", err)
+		return
+	}
+
+	csvReader := csv.NewReader(input)
+	table := CreatePartialCSV(csvReader)
+	
+	defer table.Close()
+	table.LoadAll()
+	CheckTestData1(table, t)
+}
+
 
 func TestPartialTable2(t *testing.T) {
 	input, err := os.Open("testdata/test1.txt")
@@ -269,7 +287,7 @@ func TestPartialTable2(t *testing.T) {
 		return
 	}
 
-	table := CreateParialTable(input, ParseTSVRecord)
+	table := CreatePartialTable(input, ParseTSVRecord)
 	
 	defer table.Close()
 	CheckTestData1(table, t)
