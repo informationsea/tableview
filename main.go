@@ -1,32 +1,34 @@
 /*
-    tableview: human friendly table viewer
-   
-    Copyright (C) 2016  OKAMURA, Yasunobu
+   tableview: human friendly table viewer
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+   Copyright (C) 2016  OKAMURA, Yasunobu
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package main
 
-import ("fmt";
-	"os";
-	"flag";
-	"github.com/nsf/termbox-go";
-	"regexp";
-	"errors";
-	"encoding/csv";
+import (
+	"encoding/csv"
+	"errors"
+	"flag"
+	"fmt"
+	"os"
+	"regexp"
 	"strings"
+
+	"github.com/nsf/termbox-go"
 )
 
 const VERSION = "@DEV@"
@@ -51,7 +53,7 @@ func main() {
 	flag.Parse()
 
 	if *showLicense {
-				err := termbox.Init()
+		err := termbox.Init()
 		if err != nil {
 			panic(err)
 		}
@@ -85,12 +87,14 @@ func main() {
 		fmt.Println()
 
 		if *showHelp {
-			for _, v := range HELP[4:] { fmt.Println(v[0]) }
+			for _, v := range HELP[4:] {
+				fmt.Println(v[0])
+			}
 			os.Exit(0)
 		} else {
 			os.Exit(1)
 		}
-		
+
 	}
 
 	//fmt.Println("Now loading...")
@@ -107,12 +111,12 @@ func main() {
 	} else {
 		data, err = LoadTableFromFile(flag.Args()[0], *format)
 	}
-	
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot load table file: %s\n", err.Error())
 		os.Exit(1)
 	}
-	
+
 	defer data.Close()
 
 	err = termbox.Init()
@@ -176,15 +180,15 @@ var HELP = [][]string{[]string{"tableview @DEV@"},
 }
 
 type Display struct {
-	data Table
-	searchText *regexp.Regexp
-	voffset int
-	hoffset int
-	hoffset2 int
-	fixHeader bool
-	searchMatchedLine []int
+	data               Table
+	searchText         *regexp.Regexp
+	voffset            int
+	hoffset            int
+	hoffset2           int
+	fixHeader          bool
+	searchMatchedLine  []int
 	currentMatchedLine int
-	helpMode bool
+	helpMode           bool
 }
 
 func CreateDisplay(data Table, fixHeader bool) *Display {
@@ -207,10 +211,10 @@ func (d *Display) WaitEvent() {
 				_, termHeight := termbox.Size()
 				d.Scroll(termHeight, 0)
 			} else if event.Ch == rune('k') || event.Ch == rune('p') ||
-				event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp  {
+				event.Key == termbox.KeyCtrlP || event.Key == termbox.KeyArrowUp {
 				d.Scroll(-1, 0)
 			} else if event.Ch == rune('b') || event.Ch == rune('B') ||
-				event.Key == termbox.KeyCtrlB  || event.Key == termbox.KeyPgup {
+				event.Key == termbox.KeyCtrlB || event.Key == termbox.KeyPgup {
 				_, termHeight := termbox.Size()
 				d.Scroll(-termHeight, 0)
 			} else if event.Ch == rune('l') || event.Key == termbox.KeyArrowRight {
@@ -274,15 +278,15 @@ func (d *Display) loadAllData() error {
 	if err == nil {
 		return nil
 	}
-	
+
 	d.ShowStatus("Now loading...", termbox.ColorBlue)
 	finish := make(chan bool)
 	cancel := make(chan bool)
 
 	go func() {
-		for ! d.data.LoadAll(1000) {
+		for !d.data.LoadAll(1000) {
 			select {
-			case <- cancel:
+			case <-cancel:
 				finish <- false
 				return
 			default:
@@ -304,7 +308,7 @@ func (d *Display) loadAllData() error {
 		cancel <- true
 	}()
 
-	status := <- finish
+	status := <-finish
 	if status {
 		termbox.Interrupt()
 		return nil
@@ -315,15 +319,15 @@ func (d *Display) loadAllData() error {
 func (d *Display) jumpSearchResultNext() {
 	for i, v := range d.searchMatchedLine {
 		if d.fixHeader {
-			if d.voffset < v - 1 {
+			if d.voffset < v-1 {
 				d.currentMatchedLine = i
-				d.ScrollTo(v - 1, 0);
+				d.ScrollTo(v-1, 0)
 				return
 			}
 		} else {
 			if d.voffset < v {
 				d.currentMatchedLine = i
-				d.ScrollTo(v, 0);
+				d.ScrollTo(v, 0)
 				return
 			}
 		}
@@ -340,7 +344,7 @@ func (d *Display) jumpSearchResultPrevious() {
 	lastMatched := d.data.GetLoadedLineCount()
 	for i, v := range d.searchMatchedLine {
 		if d.fixHeader {
-			if d.voffset > v - 1 {
+			if d.voffset > v-1 {
 				lastMatched = i
 			}
 		} else {
@@ -353,9 +357,9 @@ func (d *Display) jumpSearchResultPrevious() {
 	if lastMatched != d.data.GetLoadedLineCount() {
 		d.currentMatchedLine = lastMatched
 		if d.fixHeader {
-			d.ScrollTo(d.searchMatchedLine[lastMatched] - 1, 0) 
+			d.ScrollTo(d.searchMatchedLine[lastMatched]-1, 0)
 		} else {
-			d.ScrollTo(d.searchMatchedLine[lastMatched], 0) 
+			d.ScrollTo(d.searchMatchedLine[lastMatched], 0)
 		}
 		return
 	}
@@ -367,9 +371,8 @@ func (d *Display) jumpSearchResultPrevious() {
 	}
 }
 
-
 func (d *Display) Scroll(v int, h int) {
-	d.ScrollTo(d.voffset + v, d.hoffset + h)
+	d.ScrollTo(d.voffset+v, d.hoffset+h)
 }
 
 func (d *Display) ScrollTo(newVoffset int, newHoffset int) {
@@ -377,7 +380,7 @@ func (d *Display) ScrollTo(newVoffset int, newHoffset int) {
 		newVoffset = 0
 	} else {
 		count, err := d.data.GetLineCountIfAvailable()
-		if err == nil && newVoffset >= count{
+		if err == nil && newVoffset >= count {
 			newVoffset = count - 1
 		}
 	}
@@ -404,7 +407,7 @@ func (d *Display) ShowStatus(e string, color termbox.Attribute) {
 		termbox.SetCell(i, termHeight, ' ', termbox.ColorDefault, termbox.ColorDefault)
 	}
 
-	for i, v := range(e) {
+	for i, v := range e {
 		termbox.SetCell(i, termHeight, v, color, termbox.ColorWhite)
 	}
 	termbox.SetCursor(len(e), termHeight)
@@ -437,12 +440,12 @@ func (d *Display) GetCommand(prompt string) (string, error) {
 					currentPosition -= displayWidthChar(rune(text[len(text)-1]))
 					termbox.SetCell(currentPosition, termHeight, ' ', termbox.ColorDefault, termbox.ColorDefault)
 					termbox.SetCursor(currentPosition, termHeight)
-					text = text[0:len(text)-1]
+					text = text[0 : len(text)-1]
 				}
 			} else if event.Key == termbox.KeyEnter || event.Key == termbox.KeyCtrlJ ||
 				event.Key == termbox.KeyCtrlM {
-				
-			return text, nil
+
+				return text, nil
 
 			} else {
 				text += string(event.Ch)
@@ -467,7 +470,7 @@ func (d *Display) ReadSearchText() bool {
 		d.searchText = nil
 		return false
 	}
-	
+
 	reg, err2 := regexp.Compile(text)
 
 	if err2 != nil {
@@ -475,7 +478,7 @@ func (d *Display) ReadSearchText() bool {
 		d.ShowError(err2.Error())
 		return false
 	}
-	
+
 	d.searchText = reg
 	d.searchMatchedLine = make([]int, 0)
 	d.currentMatchedLine = -1
@@ -497,7 +500,7 @@ func (d *Display) ReadSearchText() bool {
 	}
 
 	d.jumpSearchResultNext()
-	
+
 	return true
 }
 
@@ -506,12 +509,16 @@ func (d *Display) GetDisplayData() [][]string {
 
 	lastLine := d.voffset + termHeight - 1
 	firstLine := d.voffset
-	if d.fixHeader {firstLine += 1}
+	if d.fixHeader {
+		firstLine += 1
+	}
 	d.data.Load(lastLine)
-	if lastLine > d.data.GetLoadedLineCount() {lastLine = d.data.GetLoadedLineCount()}
+	if lastLine > d.data.GetLoadedLineCount() {
+		lastLine = d.data.GetLoadedLineCount()
+	}
 
-	showData := make([][]string, 0, lastLine - d.voffset)
-	if (d.fixHeader) {
+	showData := make([][]string, 0, lastLine-d.voffset)
+	if d.fixHeader {
 		row := d.data.GetRow(0)
 		if d.hoffset < len(row) {
 			showData = append(showData, row[d.hoffset:])
@@ -547,11 +554,11 @@ func (d *Display) Display() {
 		for j := len(columnSize); j < len(v); j++ {
 			columnSize = append(columnSize, 0)
 		}
-		
+
 		for j := 0; j < len(v); j++ {
 			textwidth := displayWidth(v[j])
-			
-			if (columnSize[j] < textwidth) {
+
+			if columnSize[j] < textwidth {
 				columnSize[j] = textwidth
 			}
 		}
@@ -572,13 +579,13 @@ func (d *Display) Display() {
 	var v1 []string
 	for i1, v1 = range showData {
 		currentPos := -d.hoffset2
-		
-		for i2, v2 := range v1{
+
+		for i2, v2 := range v1 {
 			if i2 != 0 {
-				termbox.SetCell(currentPos + 1, i1, '|', termbox.ColorGreen, termbox.ColorDefault)
+				termbox.SetCell(currentPos+1, i1, '|', termbox.ColorGreen, termbox.ColorDefault)
 				currentPos += 3
 			}
-			
+
 			if NUMBER_RE.MatchString(v2) {
 
 			}
@@ -593,7 +600,7 @@ func (d *Display) Display() {
 			if d.searchText != nil {
 				matches = d.searchText.FindAllStringIndex(v2, -1)
 			}
-			
+
 			for i3, v3 := range v2 {
 				searchMatch := false
 				for _, a := range matches {
@@ -604,19 +611,19 @@ func (d *Display) Display() {
 
 				if searchMatch {
 					termbox.SetCell(currentPos, i1, v3,
-						termbox.ColorRed | termbox.AttrReverse | termbox.AttrBold, termbox.ColorWhite)
+						termbox.ColorRed|termbox.AttrReverse|termbox.AttrBold, termbox.ColorWhite)
 				} else {
 					termbox.SetCell(currentPos, i1, v3, termbox.ColorDefault, termbox.ColorDefault)
 				}
-				
+
 				currentPos += displayWidthChar(v3)
-				if termWidth <= currentPos + 1 {
+				if termWidth <= currentPos+1 {
 					termbox.SetCell(termWidth-1, i1, '>', termbox.ColorRed, termbox.ColorDefault)
 					break
 				}
 			}
 
-			if ! NUMBER_RE.MatchString(v2) {
+			if !NUMBER_RE.MatchString(v2) {
 				currentPos += columnSize[i2] - width
 			}
 		}
@@ -631,15 +638,15 @@ func (d *Display) Display() {
 	count, err := d.data.GetLineCountIfAvailable()
 	status := ""
 	if err == nil {
-		status = fmt.Sprintf("(line: %d/%d   column: %d/%d%s)", d.voffset + 1, count,
-			d.hoffset + 1, len(columnSize) + d.hoffset, searchStatus)
+		status = fmt.Sprintf("(line: %d/%d   column: %d/%d%s)", d.voffset+1, count,
+			d.hoffset+1, len(columnSize)+d.hoffset, searchStatus)
 	} else {
-		status = fmt.Sprintf("(line: %d/%d+   column: %d/%d%s)", d.voffset + 1, d.data.GetLoadedLineCount(),
-			d.hoffset + 1, len(columnSize) + d.hoffset, searchStatus)
+		status = fmt.Sprintf("(line: %d/%d+   column: %d/%d%s)", d.voffset+1, d.data.GetLoadedLineCount(),
+			d.hoffset+1, len(columnSize)+d.hoffset, searchStatus)
 	}
-	
+
 	currentPos := 0
-	for _, v := range(status) {
+	for _, v := range status {
 		termbox.SetCell(currentPos, termHeight, v, termbox.ColorGreen, termbox.ColorDefault)
 		currentPos += displayWidthChar(v)
 	}

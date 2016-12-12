@@ -1,36 +1,37 @@
 /*
-    table view: human friendly table viewer
-   
-    Copyright (C) 2016  OKAMURA, Yasunobu
+   table view: human friendly table viewer
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+   Copyright (C) 2016  OKAMURA, Yasunobu
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package main
 
 import (
-	"errors";
-	"strings";
-	"github.com/tealeg/xlsx";
-	"io";
-	"bufio";
-	"os";
-	"encoding/csv";
-	"fmt";
-	"compress/gzip";
-	"compress/bzip2";
+	"bufio"
+	"compress/bzip2"
+	"compress/gzip"
+	"encoding/csv"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/tealeg/xlsx"
 )
 
 type Table interface {
@@ -54,7 +55,7 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 		if err != nil {
 			panic(err)
 		}
-		
+
 		sheet := xlFile.Sheets[0]
 
 		data := make([][]string, len(sheet.Rows))
@@ -65,7 +66,7 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 				if err2 != nil {
 					return nil, err2
 				}
-				
+
 				data[ir][ic] = content
 			}
 		}
@@ -92,21 +93,20 @@ func LoadTableFromFile(filename string, format string) (Table, error) {
 		filename = filename[:len(filename)-4]
 	}
 
-	
-	if (format == "auto") {
+	if format == "auto" {
 		if strings.HasSuffix(filename, ".csv") {
 			format = "csv"
 		} else {
 			format = "tsv"
 		}
-	} else if (format == "tdf") {
+	} else if format == "tdf" {
 		format = "tsv"
-	} else if (format == "csv" || format == "tsv") {
+	} else if format == "csv" || format == "tsv" {
 		// ignore
 	} else {
 		return nil, errors.New("Invalid format")
 	}
-		
+
 	//defer inputFile.Close()
 
 	if format == "tsv" {
@@ -140,16 +140,17 @@ func (v *SimpleTable) Close() {
 	// do nothing
 }
 
-func (v *SimpleTable)  LoadAll(timeout int) bool {
+func (v *SimpleTable) LoadAll(timeout int) bool {
 	// do nothing
 	return true
 }
 
-func (v *SimpleTable)  Load(line int) {
+func (v *SimpleTable) Load(line int) {
 	// do nothing
 }
 
-type ParseFinishError struct {}
+type ParseFinishError struct{}
+
 func (p ParseFinishError) Error() string {
 	return "Finished"
 }
@@ -172,10 +173,10 @@ func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
 
 type PartialTable struct {
 	nextData chan []string
-	errChan chan error
-	data [][]string
-	finish bool
-	err error
+	errChan  chan error
+	data     [][]string
+	finish   bool
+	err      error
 }
 
 func CreatePartialCSV(reader *csv.Reader) *PartialTable {
@@ -188,7 +189,9 @@ func CreatePartialCSV(reader *csv.Reader) *PartialTable {
 
 		for {
 			record, err := reader.Read()
-			if err == io.EOF {break}
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
 				errChan <- err
 				return
@@ -242,7 +245,7 @@ func CreatePartialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable 
 			}
 		}
 	}()
-	
+
 	return &PartialTable{nextData, errChan, make([][]string, 0), false, nil}
 }
 
@@ -280,7 +283,7 @@ func (p *PartialTable) Load(line int) {
 	if len(p.data) > line {
 		return
 	}
-	
+
 	for v := range p.nextData {
 		p.data = append(p.data, v)
 		if len(p.data) > line {
@@ -291,5 +294,5 @@ func (p *PartialTable) Load(line int) {
 }
 
 func (p *PartialTable) Close() {
-	
+
 }

@@ -1,28 +1,28 @@
 /*
-    tableview: human friendly table viewer
-   
-    Copyright (C) 2016  OKAMURA, Yasunobu
+   tableview: human friendly table viewer
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+   Copyright (C) 2016  OKAMURA, Yasunobu
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package main
 
 import (
-	"testing";
-	"os";
 	"encoding/csv"
+	"os"
+	"testing"
 )
 
 func CheckTestData1(table Table, t *testing.T) {
@@ -49,7 +49,7 @@ func CheckTestData1(table Table, t *testing.T) {
 	if table.GetRow(1)[2] != "3" {
 		t.Error("Invalid data at 1,2")
 	}
-	
+
 	if table.GetRow(2)[0] != "12" {
 		t.Error("Invalid data at 2,0")
 	}
@@ -74,7 +74,6 @@ func CheckTestData1(table Table, t *testing.T) {
 		t.Error("Invalid data at 20,2")
 	}
 
-	
 	if table.GetRow(71)[0] != "E" {
 		t.Error("Invalid data at 72,0")
 	}
@@ -131,7 +130,7 @@ func CheckTestData4(table Table, t *testing.T) {
 	if len(table.GetRow(1)) != 4 {
 		t.Error("invalid number of columns in second line")
 	}
-	
+
 	if table.GetRow(2)[0] != "12" {
 		t.Error("Invalid data at 2,0")
 	}
@@ -160,7 +159,6 @@ func CheckTestData4(table Table, t *testing.T) {
 		t.Error("Invalid data at 20,2")
 	}
 
-	
 	if table.GetRow(71)[0] != "E" {
 		t.Error("Invalid data at 72,0")
 	}
@@ -185,7 +183,6 @@ func CheckTestData4(table Table, t *testing.T) {
 	}
 }
 
-
 func TestCreateTable(t *testing.T) {
 	data, err1 := LoadTableFromFile("testdata/test1.csv", "auto")
 
@@ -200,7 +197,7 @@ func TestCreateTable(t *testing.T) {
 
 func TestCreateTable2(t *testing.T) {
 	data, err1 := LoadTableFromFile("testdata/test1.txt", "auto")
-	
+
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
@@ -212,7 +209,7 @@ func TestCreateTable2(t *testing.T) {
 
 func TestCreateTable3(t *testing.T) {
 	data, err1 := LoadTableFromFile("testdata/test1.xlsx", "auto")
-	
+
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
@@ -224,7 +221,7 @@ func TestCreateTable3(t *testing.T) {
 
 func TestCreateTable4(t *testing.T) {
 	data, err1 := LoadTableFromFile("testdata/test4.tsv", "auto")
-	
+
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
@@ -236,7 +233,7 @@ func TestCreateTable4(t *testing.T) {
 
 func TestCreateTable5(t *testing.T) {
 	data, err1 := LoadTableFromFile("testdata/test3.txt", "auto")
-	
+
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
 		return
@@ -246,24 +243,23 @@ func TestCreateTable5(t *testing.T) {
 	CheckTestData3(data, t)
 }
 
-
 func TestPartialTable1(t *testing.T) {
 	input, err := os.Open("testdata/test3.txt")
-	
+
 	if err != nil {
 		t.Errorf("Cannot open file: %s", err)
 		return
 	}
 
 	table := CreatePartialTable(input, ParseTSVRecord)
-	
+
 	defer table.Close()
 	CheckTestData3(table, t)
 }
 
 func TestPartialTable1CSV(t *testing.T) {
 	input, err := os.Open("testdata/test1.csv")
-	
+
 	if err != nil {
 		t.Errorf("Cannot open file: %s", err)
 		return
@@ -271,22 +267,21 @@ func TestPartialTable1CSV(t *testing.T) {
 
 	csvReader := csv.NewReader(input)
 	table := CreatePartialCSV(csvReader)
-	
+
 	defer table.Close()
 	CheckTestData1(table, t)
 }
 
-
 func TestPartialTable2(t *testing.T) {
 	input, err := os.Open("testdata/test1.txt")
-	
+
 	if err != nil {
 		t.Errorf("Cannot open file: %s", err)
 		return
 	}
 
 	table := CreatePartialTable(input, ParseTSVRecord)
-	
+
 	defer table.Close()
 	CheckTestData1(table, t)
 }
