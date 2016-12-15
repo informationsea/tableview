@@ -134,8 +134,8 @@ func (v *SimpleTable) GetLoadedLineCount() int {
 
 func (v *SimpleTable) GetRow(line int) ([]string, error) {
 	//if len(v.Data[line]) <= line {
-//		return nil, errors.New("index out of range")
-//	}
+	//		return nil, errors.New("index out of range")
+	//	}
 	return v.Data[line], nil
 }
 

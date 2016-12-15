@@ -28,8 +28,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nsf/termbox-go"
 	"github.com/mattn/go-isatty"
+	"github.com/nsf/termbox-go"
 )
 
 const VERSION = "@DEV@"
@@ -510,7 +510,7 @@ func (d *Display) ReadSearchText() bool {
 		if err != nil {
 			panic(err)
 		}
-		
+
 		for _, c := range row {
 			if d.searchText.FindString(c) != "" {
 				d.searchMatchedLine = append(d.searchMatchedLine, i)
@@ -537,7 +537,7 @@ func (d *Display) GetDisplayData() [][]string {
 		lastLine = d.data.GetLoadedLineCount()
 	}
 
-	showData := make([][]string, 0, lastLine - d.voffset)
+	showData := make([][]string, 0, lastLine-d.voffset)
 	if d.fixHeader {
 		row, err := d.data.GetRow(0)
 
@@ -556,7 +556,7 @@ func (d *Display) GetDisplayData() [][]string {
 			showData = append(showData, []string{})
 			break
 		}
-		
+
 		if d.hoffset < len(row) {
 			showData = append(showData, row[d.hoffset:])
 		} else {
@@ -598,7 +598,7 @@ func (d *Display) Display() {
 			d.Scroll(0, -1)
 			return
 		}
-		d.hoffset2 = 0;
+		d.hoffset2 = 0
 	} else {
 		if columnSize[0] <= d.hoffset2 {
 			d.hoffset2 = columnSize[0] - 1
