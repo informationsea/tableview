@@ -26,66 +26,78 @@ import (
 )
 
 func CheckTestData1(table Table, t *testing.T) {
-	if table.GetRow(0)[0] != "Header 1" {
-		t.Error("Invalid data at 0,0: %s", table.GetRow(0)[0])
+	row, err := table.GetRow(0)
+	if row[0] != "Header 1" {
+		t.Error("Invalid data at 0,0: %s", row[0])
 	}
 
-	if table.GetRow(0)[1] != "Header 2" {
+	row, err = table.GetRow(0)
+    if row[1] != "Header 2" {
 		t.Error("Invalid data at 0,1")
 	}
 
-	if table.GetRow(0)[2] != "Header 3" {
+	row, err = table.GetRow(0)
+    if row[2] != "Header 3" {
 		t.Error("Invalid data at 0,2")
 	}
 
-	if table.GetRow(1)[0] != "1" {
+	row, err = table.GetRow(1)
+    if row[0] != "1" {
 		t.Error("Invalid data at 1,0")
 	}
 
-	if table.GetRow(1)[1] != "2" {
+	row, err = table.GetRow(1)
+    if row[1] != "2" {
 		t.Error("Invalid data at 1,1")
 	}
 
-	if table.GetRow(1)[2] != "3" {
+	row, err = table.GetRow(1)
+    if row[2] != "3" {
 		t.Error("Invalid data at 1,2")
 	}
-
-	if table.GetRow(2)[0] != "12" {
+	row, err = table.GetRow(2)
+    if row[0] != "12" {
 		t.Error("Invalid data at 2,0")
 	}
 
-	if table.GetRow(2)[1] != "23" {
+	row, err = table.GetRow(2)
+    if row[1] != "23" {
 		t.Error("Invalid data at 2,1")
 	}
 
-	if table.GetRow(2)[2] != "34" {
+	row, err = table.GetRow(2)
+    if row[2] != "34" {
 		t.Error("Invalid data at 2,2")
 	}
 
-	if table.GetRow(20)[0] != "1" {
+	row, err = table.GetRow(20)
+    if row[0] != "1" {
 		t.Error("Invalid data at 20,0")
 	}
 
-	if table.GetRow(20)[1] != "2" {
+	row, err = table.GetRow(20)
+    if row[1] != "2" {
 		t.Error("Invalid data at 20,1")
 	}
 
-	if table.GetRow(20)[2] != "3" {
+	row, err = table.GetRow(20)
+    if row[2] != "3" {
 		t.Error("Invalid data at 20,2")
 	}
 
-	if table.GetRow(71)[0] != "E" {
+	row, err = table.GetRow(71)
+    if row[0] != "E" {
 		t.Error("Invalid data at 72,0")
 	}
 
-	if table.GetRow(71)[1] != "N" {
+    if row[1] != "N" {
 		t.Error("Invalid data at 72,1")
 	}
 
-	if table.GetRow(71)[2] != "D" {
+    if row[2] != "D" {
 		t.Error("Invalid data at 72,2")
 	}
-
+ 
 	table.LoadAll(1000)
 	count, err := table.GetLineCountIfAvailable()
 
@@ -99,75 +111,90 @@ func CheckTestData1(table Table, t *testing.T) {
 }
 
 func CheckTestData4(table Table, t *testing.T) {
-	if table.GetRow(0)[0] != "Header 1" {
-		t.Errorf("Invalid data at 0,0: %s", table.GetRow(0)[2])
+	row, err := table.GetRow(0)
+    if row[0] != "Header 1" {
+		t.Errorf("Invalid data at 0,0: %s", row[2])
 	}
 
-	if table.GetRow(0)[1] != "Header 2" {
-		t.Errorf("Invalid data at 0,1: %s", table.GetRow(0)[2])
+	row, err = table.GetRow(0)
+    if row[1] != "Header 2" {
+		t.Errorf("Invalid data at 0,1: %s", row[2])
 	}
 
-	if table.GetRow(0)[2] != "Header 3" {
-		t.Errorf("Invalid data at 0,2: %s", table.GetRow(0)[2])
+	row, err = table.GetRow(0)
+    if row[2] != "Header 3" {
+		t.Errorf("Invalid data at 0,2: %s", row[2])
 	}
 
-	if len(table.GetRow(0)) != 3 {
-		t.Errorf("invalid number of columns in first line: %d", len(table.GetRow(0)))
+	if len(row) != 3 {
+		t.Errorf("invalid number of columns in first line: %d", row)
 	}
 
-	if table.GetRow(1)[0] != "1" {
-		t.Errorf("Invalid data at 1,0: %s", table.GetRow(1)[0])
+	row, err = table.GetRow(1)
+    if row[0] != "1" {
+		t.Errorf("Invalid data at 1,0: %s", row[0])
 	}
 
-	if table.GetRow(1)[1] != "2" {
-		t.Errorf("Invalid data at 1,1: %s", table.GetRow(1)[1])
+	row, err = table.GetRow(1)
+    if row[1] != "2" {
+		t.Errorf("Invalid data at 1,1: %s", row[1])
 	}
 
-	if table.GetRow(1)[2] != "3" {
-		t.Errorf("Invalid data at 1,2: %s", table.GetRow(1)[2])
+	row, err = table.GetRow(1)
+    if row[2] != "3" {
+		t.Errorf("Invalid data at 1,2: %s", row[2])
 	}
 
-	if len(table.GetRow(1)) != 4 {
+	if len(row) != 4 {
 		t.Error("invalid number of columns in second line")
 	}
 
-	if table.GetRow(2)[0] != "12" {
+	row, err = table.GetRow(2)
+    if row[0] != "12" {
 		t.Error("Invalid data at 2,0")
 	}
 
-	if table.GetRow(2)[1] != "23" {
+	row, err = table.GetRow(2)
+    if row[1] != "23" {
 		t.Error("Invalid data at 2,1")
 	}
 
-	if table.GetRow(2)[2] != "34" {
+	row, err = table.GetRow(2)
+    if row[2] != "34" {
 		t.Error("Invalid data at 2,2")
 	}
 
-	if len(table.GetRow(2)) != 3 {
+	if len(row) != 3 {
 		t.Error("invalid number of columns in third line")
 	}
 
-	if table.GetRow(20)[0] != "1" {
+	row, err = table.GetRow(20)
+    if row[0] != "1" {
 		t.Error("Invalid data at 20,0")
 	}
 
-	if table.GetRow(20)[1] != "2" {
+	row, err = table.GetRow(20)
+    if row[1] != "2" {
 		t.Error("Invalid data at 20,1")
 	}
 
-	if table.GetRow(20)[2] != "3" {
+	row, err = table.GetRow(20)
+    if row[2] != "3" {
 		t.Error("Invalid data at 20,2")
 	}
 
-	if table.GetRow(71)[0] != "E" {
+	row, err = table.GetRow(71)
+    if row[0] != "E" {
 		t.Error("Invalid data at 72,0")
 	}
 
-	if table.GetRow(71)[1] != "N" {
+	row, err = table.GetRow(71)
+    if row[1] != "N" {
 		t.Error("Invalid data at 72,1")
 	}
 
-	if table.GetRow(71)[2] != "D" {
+	row, err = table.GetRow(71)
+    if row[2] != "D" {
 		t.Error("Invalid data at 72,2")
 	}
 
@@ -287,100 +314,118 @@ func TestPartialTable2(t *testing.T) {
 }
 
 func CheckTestData3(table Table, t *testing.T) {
-	if table.GetRow(0)[0] != "日本語のヘッダ" {
-		t.Errorf("Invalid data at 0,0: %s", table.GetRow(0)[0])
+	row, err := table.GetRow(0)
+    if row[0] != "日本語のヘッダ" {
+		t.Errorf("Invalid data at 0,0: %s", row[0])
 	}
 
-	if table.GetRow(0)[1] != "English Header" {
-		t.Errorf("Invalid data at 0,1: %s", table.GetRow(0)[1])
+	row, err = table.GetRow(0)
+    if row[1] != "English Header" {
+		t.Errorf("Invalid data at 0,1: %s", row[1])
 	}
 
-	if table.GetRow(0)[2] != "hoge" {
-		t.Errorf("Invalid data at 0,2: %s", table.GetRow(0)[2])
+	row, err = table.GetRow(0)
+    if row[2] != "hoge" {
+		t.Errorf("Invalid data at 0,2: %s", row[2])
 	}
 
-	if len(table.GetRow(0)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(0)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", row)
 	}
 
-	if table.GetRow(1)[0] != "1" {
-		t.Errorf("Invalid data at 1,0: %s", table.GetRow(1)[0])
+	row, err = table.GetRow(1)
+    if row[0] != "1" {
+		t.Errorf("Invalid data at 1,0: %s", row[0])
 	}
 
-	if table.GetRow(1)[1] != "2" {
-		t.Errorf("Invalid data at 1,1: %s", table.GetRow(1)[1])
+	row, err = table.GetRow(1)
+    if row[1] != "2" {
+		t.Errorf("Invalid data at 1,1: %s", row[1])
 	}
 
-	if table.GetRow(1)[2] != "3" {
-		t.Errorf("Invalid data at 1,2: %s", table.GetRow(1)[2])
+	row, err = table.GetRow(1)
+    if row[2] != "3" {
+		t.Errorf("Invalid data at 1,2: %s", row[2])
 	}
 
-	if len(table.GetRow(1)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(1)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", row)
 	}
 
-	if table.GetRow(2)[0] != "2" {
-		t.Errorf("Invalid data at 2,0: %s", table.GetRow(2)[0])
+	row, err = table.GetRow(2)
+    if row[0] != "2" {
+		t.Errorf("Invalid data at 2,0: %s", row[0])
 	}
 
-	if table.GetRow(2)[1] != "3" {
-		t.Errorf("Invalid data at 2,1: %s", table.GetRow(2)[1])
+	row, err = table.GetRow(2)
+    if row[1] != "3" {
+		t.Errorf("Invalid data at 2,1: %s", row[1])
 	}
 
-	if table.GetRow(2)[2] != "4" {
-		t.Errorf("Invalid data at 2,2: %s", table.GetRow(2)[2])
+	row, err = table.GetRow(2)
+    if row[2] != "4" {
+		t.Errorf("Invalid data at 2,2: %s", row[2])
 	}
 
-	if len(table.GetRow(2)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(2)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", row)
 	}
 
-	if table.GetRow(3)[0] != "3" {
-		t.Errorf("Invalid data at 3,0: %s", table.GetRow(3)[0])
+	row, err = table.GetRow(3)
+    if row[0] != "3" {
+		t.Errorf("Invalid data at 3,0: %s", row[0])
 	}
 
-	if table.GetRow(3)[1] != "4" {
-		t.Errorf("Invalid data at 3,1: %s", table.GetRow(3)[1])
+	row, err = table.GetRow(3)
+    if row[1] != "4" {
+		t.Errorf("Invalid data at 3,1: %s", row[1])
 	}
 
-	if table.GetRow(3)[2] != "5" {
-		t.Errorf("Invalid data at 3,2: %s", table.GetRow(3)[2])
+	row, err = table.GetRow(3)
+    if row[2] != "5" {
+		t.Errorf("Invalid data at 3,2: %s", row[2])
 	}
 
-	if len(table.GetRow(3)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(3)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", len(row))
 	}
 
-	if table.GetRow(4)[0] != "4" {
-		t.Errorf("Invalid data at 3,0: %s", table.GetRow(4)[0])
+	row, err = table.GetRow(4)
+    if row[0] != "4" {
+		t.Errorf("Invalid data at 3,0: %s", row[0])
 	}
 
-	if table.GetRow(4)[1] != "5" {
-		t.Errorf("Invalid data at 3,1: %s", table.GetRow(4)[1])
+	row, err = table.GetRow(4)
+    if row[1] != "5" {
+		t.Errorf("Invalid data at 3,1: %s", row[1])
 	}
 
-	if table.GetRow(4)[2] != "6" {
-		t.Errorf("Invalid data at 3,2: %s", table.GetRow(4)[2])
+	row, err = table.GetRow(4)
+    if row[2] != "6" {
+		t.Errorf("Invalid data at 3,2: %s", row[2])
 	}
 
-	if len(table.GetRow(4)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(4)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", len(row))
 	}
 
-	if table.GetRow(5)[0] != "5" {
-		t.Errorf("Invalid data at 3,0: %s", table.GetRow(5)[0])
+	row, err = table.GetRow(5)
+    if row[0] != "5" {
+		t.Errorf("Invalid data at 3,0: %s", row[0])
 	}
 
-	if table.GetRow(5)[1] != "6" {
-		t.Errorf("Invalid data at 3,1: %s", table.GetRow(5)[1])
+	row, err = table.GetRow(5)
+    if row[1] != "6" {
+		t.Errorf("Invalid data at 3,1: %s", row[1])
 	}
 
-	if table.GetRow(5)[2] != "7" {
-		t.Errorf("Invalid data at 3,2: %s", table.GetRow(5)[2])
+	row, err = table.GetRow(5)
+    if row[2] != "7" {
+		t.Errorf("Invalid data at 3,2: %s", row[2])
 	}
 
-	if len(table.GetRow(5)) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(table.GetRow(5)))
+	if len(row) != 3 {
+		t.Errorf("Invalid number of columns in a cell", len(row))
 	}
 
 	table.LoadAll(1000)
@@ -392,5 +437,26 @@ func CheckTestData3(table Table, t *testing.T) {
 
 	if count != 6 {
 		t.Errorf("Invalid max line: %d", count)
+	}
+}
+
+func TestPartialTableEmpty(t *testing.T) {
+	input, err := os.Open("testdata/empty.txt")
+	
+	if err != nil {
+		t.Errorf("Cannot open file: %s", err)
+		return
+	}
+
+	table := CreatePartialTable(input, ParseTSVRecord)
+	defer table.Close()
+
+	if table.GetLoadedLineCount() != 0 {
+		t.Errorf("Too many loaded line", table.GetLoadedLineCount())
+	}
+	
+	_, err = table.GetRow(0)
+	if err == nil {
+		t.Error("getting empty column should be null")
 	}
 }

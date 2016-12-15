@@ -37,7 +37,7 @@ import (
 type Table interface {
 	GetLineCountIfAvailable() (int, error)
 	GetLoadedLineCount() int
-	GetRow(int) []string
+	GetRow(int) ([]string, error)
 	LoadAll(timeout int) bool
 	Load(line int)
 	Close()
@@ -132,8 +132,11 @@ func (v *SimpleTable) GetLoadedLineCount() int {
 	return len(v.Data)
 }
 
-func (v *SimpleTable) GetRow(line int) []string {
-	return v.Data[line]
+func (v *SimpleTable) GetRow(line int) ([]string, error) {
+	//if len(v.Data[line]) <= line {
+//		return nil, errors.New("index out of range")
+//	}
+	return v.Data[line], nil
 }
 
 func (v *SimpleTable) Close() {
@@ -261,9 +264,12 @@ func (p *PartialTable) GetLoadedLineCount() int {
 	return len(p.data) + len(p.nextData)
 }
 
-func (p *PartialTable) GetRow(line int) []string {
+func (p *PartialTable) GetRow(line int) ([]string, error) {
 	p.Load(line)
-	return p.data[line]
+	if len(p.data) <= line || line < 0 {
+		return nil, errors.New("index out of range line")
+	}
+	return p.data[line], nil
 }
 
 func (p *PartialTable) LoadAll(timeout int) bool {

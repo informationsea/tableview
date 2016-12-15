@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/nsf/termbox-go"
+	"github.com/mattn/go-isatty"
 )
 
 const VERSION = "@DEV@"
@@ -81,7 +82,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *showHelp || len(flag.Args()) > 1 {
+	if *showHelp || len(flag.Args()) > 1 || (len(flag.Args()) == 0 && isatty.IsTerminal(os.Stdin.Fd())) {
 		fmt.Println("tableview [-format FORMAT] [FILE]\n")
 		flag.PrintDefaults()
 		fmt.Println()
@@ -95,6 +96,11 @@ func main() {
 			os.Exit(1)
 		}
 
+	}
+
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		fmt.Fprintf(os.Stderr, "No output terminal is found\n")
+		os.Exit(1)
 	}
 
 	//fmt.Println("Now loading...")
@@ -118,6 +124,12 @@ func main() {
 	}
 
 	defer data.Close()
+
+	_, err = data.GetRow(0)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Empty data\n")
+		return
+	}
 
 	err = termbox.Init()
 	if err != nil {
@@ -383,6 +395,9 @@ func (d *Display) ScrollTo(newVoffset int, newHoffset int) {
 		if err == nil && newVoffset >= count {
 			newVoffset = count - 1
 		}
+		if newVoffset < 0 {
+			newVoffset = 0
+		}
 	}
 
 	if newHoffset < 0 {
@@ -491,7 +506,12 @@ func (d *Display) ReadSearchText() bool {
 
 	d.ShowStatus("Now searching...", termbox.ColorBlue)
 	for i := 0; i < d.data.GetLoadedLineCount(); i++ {
-		for _, c := range d.data.GetRow(i) {
+		row, err := d.data.GetRow(i)
+		if err != nil {
+			panic(err)
+		}
+		
+		for _, c := range row {
 			if d.searchText.FindString(c) != "" {
 				d.searchMatchedLine = append(d.searchMatchedLine, i)
 				break
@@ -517,17 +537,26 @@ func (d *Display) GetDisplayData() [][]string {
 		lastLine = d.data.GetLoadedLineCount()
 	}
 
-	showData := make([][]string, 0, lastLine-d.voffset)
+	showData := make([][]string, 0, lastLine - d.voffset)
 	if d.fixHeader {
-		row := d.data.GetRow(0)
-		if d.hoffset < len(row) {
+		row, err := d.data.GetRow(0)
+
+		if err != nil {
+			showData = append(showData, []string{})
+		} else if d.hoffset < len(row) {
 			showData = append(showData, row[d.hoffset:])
 		} else {
 			showData = append(showData, []string{})
 		}
 	}
 	for i := firstLine; i < lastLine; i++ {
-		row := d.data.GetRow(i)
+		row, err := d.data.GetRow(i)
+
+		if err != nil {
+			showData = append(showData, []string{})
+			break
+		}
+		
 		if d.hoffset < len(row) {
 			showData = append(showData, row[d.hoffset:])
 		} else {
@@ -565,12 +594,15 @@ func (d *Display) Display() {
 	}
 
 	if len(columnSize) == 0 {
-		d.Scroll(0, -1)
-		return
-	}
-
-	if columnSize[0] <= d.hoffset2 {
-		d.hoffset2 = columnSize[0] - 1
+		if d.hoffset != 0 {
+			d.Scroll(0, -1)
+			return
+		}
+		d.hoffset2 = 0;
+	} else {
+		if columnSize[0] <= d.hoffset2 {
+			d.hoffset2 = columnSize[0] - 1
+		}
 	}
 
 	termbox.SetCursor(0, 0)
