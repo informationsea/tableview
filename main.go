@@ -47,6 +47,7 @@ func ShowLicense() {
 
 func main() {
 	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
+	var sheetNum = flag.Int("sheet", 1, "Sheet index (Excel only)")
 	var fixHeader = flag.Bool("header", false, "Fix header line")
 	var showVersion = flag.Bool("version", false, "Show version")
 	var showLicense = flag.Bool("license", false, "Show license")
@@ -115,7 +116,7 @@ func main() {
 			data = CreatePartialTable(os.Stdin, ParseTSVRecord)
 		}
 	} else {
-		data, err = LoadTableFromFile(flag.Args()[0], *format)
+		data, err = LoadTableFromFile(flag.Args()[0], *format, *sheetNum)
 	}
 
 	if err != nil {

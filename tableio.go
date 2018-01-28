@@ -49,14 +49,18 @@ type SimpleTable struct {
 
 var TSV_FORMAT = []string{"txt", "tsv", "tdf", "bed", "sam", "gtf", "gff3", "vcf"}
 
-func LoadTableFromFile(filename string, format string) (Table, error) {
+func LoadTableFromFile(filename string, format string, sheetNum int) (Table, error) {
 	if format == "xlsx" || (strings.HasSuffix(filename, ".xlsx") && format == "auto") {
 		xlFile, err := xlsx.OpenFile(filename)
 		if err != nil {
 			panic(err)
 		}
 
-		sheet := xlFile.Sheets[0]
+		if len(xlFile.Sheets) < sheetNum-1 {
+			panic("Invalid sheet number")
+		}
+
+		sheet := xlFile.Sheets[sheetNum-1]
 
 		data := make([][]string, len(sheet.Rows))
 		for ir, row := range sheet.Rows {
