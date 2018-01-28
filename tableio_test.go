@@ -211,7 +211,7 @@ func CheckTestData4(table Table, t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
-	data, err1 := LoadTableFromFile("testdata/test1.csv", "auto")
+	data, err1 := LoadTableFromFile("testdata/test1.csv", "auto", 1)
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -223,7 +223,7 @@ func TestCreateTable(t *testing.T) {
 }
 
 func TestCreateTable2(t *testing.T) {
-	data, err1 := LoadTableFromFile("testdata/test1.txt", "auto")
+	data, err1 := LoadTableFromFile("testdata/test1.txt", "auto", 1)
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -235,7 +235,7 @@ func TestCreateTable2(t *testing.T) {
 }
 
 func TestCreateTable3(t *testing.T) {
-	data, err1 := LoadTableFromFile("testdata/test1.xlsx", "auto")
+	data, err1 := LoadTableFromFile("testdata/test1.xlsx", "auto", 1)
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -247,7 +247,7 @@ func TestCreateTable3(t *testing.T) {
 }
 
 func TestCreateTable4(t *testing.T) {
-	data, err1 := LoadTableFromFile("testdata/test4.tsv", "auto")
+	data, err1 := LoadTableFromFile("testdata/test4.tsv", "auto", 1)
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
@@ -259,7 +259,7 @@ func TestCreateTable4(t *testing.T) {
 }
 
 func TestCreateTable5(t *testing.T) {
-	data, err1 := LoadTableFromFile("testdata/test3.txt", "auto")
+	data, err1 := LoadTableFromFile("testdata/test3.txt", "auto", 0)
 
 	if err1 != nil {
 		t.Errorf("Cannot open file: %s", err1)
