@@ -66,12 +66,12 @@ func LoadTableFromFile(filename string, format string, sheetNum int) (Table, err
 		for ir, row := range sheet.Rows {
 			data[ir] = make([]string, len(row.Cells))
 			for ic, cell := range row.Cells {
-				content, err2 := cell.String()
-				if err2 == nil {
-					data[ir][ic] = content
-				} else {
-					data[ir][ic] = cell.Value
-				}
+				content := cell.String()
+				//if err2 == nil {
+				data[ir][ic] = content
+				//} else {
+				//	data[ir][ic] = cell.Value
+				//}
 			}
 		}
 		return CreateTable(data), nil
