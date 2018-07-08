@@ -38,8 +38,8 @@ type Table interface {
 	GetLineCountIfAvailable() (int, error)
 	GetLoadedLineCount() int
 	GetRow(int) ([]string, error)
-	LoadAll(timeout int) bool
-	Load(line int)
+	LoadAll(timeout int) (bool, error)
+	Load(line int) error
 	Close()
 }
 
@@ -147,13 +147,14 @@ func (v *SimpleTable) Close() {
 	// do nothing
 }
 
-func (v *SimpleTable) LoadAll(timeout int) bool {
+func (v *SimpleTable) LoadAll(timeout int) (bool, error) {
 	// do nothing
-	return true
+	return true, nil
 }
 
-func (v *SimpleTable) Load(line int) {
+func (v *SimpleTable) Load(line int) error {
 	// do nothing
+	return nil
 }
 
 type ParseFinishError struct{}
@@ -178,64 +179,68 @@ func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
 	}
 }
 
+type partialTableData struct {
+	lines []string
+	err   error
+}
+
 type PartialTable struct {
-	nextData chan []string
-	errChan  chan error
+	nextData chan partialTableData
 	data     [][]string
 	finish   bool
 	err      error
 }
 
 func CreatePartialCSV(reader *csv.Reader) *PartialTable {
-	nextData := make(chan []string, 1000)
-	errChan := make(chan error)
+	nextData := make(chan partialTableData, 1000)
 
 	go func() {
 		defer close(nextData)
-		defer close(errChan)
 
 		for {
 			record, err := reader.Read()
+			logger.Printf("CSV %s %s", record, err)
 			if err == io.EOF {
 				break
 			}
 			if err != nil {
-				errChan <- err
+				nextData <- partialTableData{nil, err}
 				return
 			}
-			nextData <- record
+			nextData <- partialTableData{record, nil}
 		}
 	}()
 
-	return &PartialTable{nextData, errChan, make([][]string, 0), false, nil}
+	return &PartialTable{nextData, make([][]string, 0), false, nil}
 }
 
 func CreatePartialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable {
-	nextData := make(chan []string, 1000)
-	errChan := make(chan error)
+	nextData := make(chan partialTableData, 1000)
+	logger.Println("CreatePartialTable")
 
 	go func() {
 		defer close(nextData)
-		defer close(errChan)
 		scanner := bufio.NewScanner(reader)
 
 		unprocessedData := ""
 		for scanner.Scan() {
 			unprocessedData += scanner.Text() + "\n"
+			logger.Printf("Scan %s\n", unprocessedData)
 			data, notProcessed, err := parser(unprocessedData, false)
 			unprocessedData = notProcessed
 			if data != nil {
-				nextData <- data
+				logger.Printf("read row %s\n", data)
+				nextData <- partialTableData{data, nil}
 			}
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error %s", err.Error())
-				errChan <- err
+				nextData <- partialTableData{nil, err}
 				return
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			errChan <- err
+			nextData <- partialTableData{nil, err}
 			return
 		}
 
@@ -243,25 +248,24 @@ func CreatePartialTable(reader io.Reader, parser ParseRecordFunc) *PartialTable 
 			data, notProcessed, err := parser(unprocessedData, true)
 			unprocessedData = notProcessed
 			if data != nil {
-				nextData <- data
+				nextData <- partialTableData{data, nil}
 			}
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error %s", err.Error())
-				errChan <- err
+				nextData <- partialTableData{nil, err}
 				return
 			}
 		}
 	}()
 
-	return &PartialTable{nextData, errChan, make([][]string, 0), false, nil}
+	return &PartialTable{nextData, make([][]string, 0), false, nil}
 }
 
 func (p *PartialTable) GetLineCountIfAvailable() (int, error) {
 	if p.finish {
 		return len(p.data), nil
-	} else {
-		return -1, errors.New("Not finished")
 	}
+	return -1, errors.New("Not finished")
 }
 
 func (p *PartialTable) GetLoadedLineCount() int {
@@ -276,31 +280,41 @@ func (p *PartialTable) GetRow(line int) ([]string, error) {
 	return p.data[line], nil
 }
 
-func (p *PartialTable) LoadAll(timeout int) bool {
+func (p *PartialTable) LoadAll(timeout int) (bool, error) {
 	start := time.Now()
 	for v := range p.nextData {
-		p.data = append(p.data, v)
+		if v.err != nil {
+			logger.Printf("Bad Data %s\n", v.err.Error())
+			return false, v.err
+		}
+		p.data = append(p.data, v.lines)
 		d := time.Since(start)
 		if d.Nanoseconds() > int64(timeout)*1000 {
-			return false
+			return false, nil
 		}
 	}
+
 	p.finish = true
-	return true
+	return true, nil
 }
 
-func (p *PartialTable) Load(line int) {
+func (p *PartialTable) Load(line int) error {
 	if len(p.data) > line {
-		return
+		return nil
 	}
 
 	for v := range p.nextData {
-		p.data = append(p.data, v)
+		if v.err != nil {
+			logger.Printf("Bad Data %s\n", v.err.Error())
+			return v.err
+		}
+		p.data = append(p.data, v.lines)
 		if len(p.data) > line {
-			return
+			return nil
 		}
 	}
 	p.finish = true
+	return nil
 }
 
 func (p *PartialTable) Close() {

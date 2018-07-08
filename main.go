@@ -24,6 +24,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -45,6 +46,8 @@ func ShowLicense() {
 	display.WaitEvent()
 }
 
+var logger *log.Logger = log.New(EmptyWriter{}, "", log.LstdFlags)
+
 func main() {
 	var format = flag.String("format", "auto", "input format (auto/csv/tsv/tdf)")
 	var sheetNum = flag.Int("sheet", 1, "Sheet index (Excel only)")
@@ -52,7 +55,18 @@ func main() {
 	var showVersion = flag.Bool("version", false, "Show version")
 	var showLicense = flag.Bool("license", false, "Show license")
 	var showHelp = flag.Bool("help", false, "Show help")
+	var loggerPath = flag.String("logger", "", "Log file for debug")
 	flag.Parse()
+
+	if *loggerPath != "" {
+		logFile, err := os.OpenFile(*loggerPath, os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err.Error())
+		}
+		defer logFile.Close()
+
+		logger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	}
 
 	if *showLicense {
 		err := termbox.Init()
@@ -84,7 +98,8 @@ func main() {
 	}
 
 	if *showHelp || len(flag.Args()) > 1 || (len(flag.Args()) == 0 && isatty.IsTerminal(os.Stdin.Fd())) {
-		fmt.Println("tableview [-format FORMAT] [FILE]\n")
+		fmt.Println("tableview [-format FORMAT] [FILE]")
+		fmt.Println()
 		flag.PrintDefaults()
 		fmt.Println()
 
@@ -297,7 +312,15 @@ func (d *Display) loadAllData() error {
 	cancel := make(chan bool)
 
 	go func() {
-		for !d.data.LoadAll(1000) {
+		for {
+			c, e := d.data.LoadAll(1000)
+			if e != nil {
+				panic(e)
+			}
+			if !c {
+				break
+			}
+
 			select {
 			case <-cancel:
 				finish <- false
@@ -417,6 +440,7 @@ func (d *Display) ShowError(e string) {
 }
 
 func (d *Display) ShowStatus(e string, color termbox.Attribute) {
+	logger.Printf("ShowStatus %s\n", e)
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 	for i := 0; i < termWidth; i++ {
@@ -431,6 +455,7 @@ func (d *Display) ShowStatus(e string, color termbox.Attribute) {
 }
 
 func (d *Display) GetCommand(prompt string) (string, error) {
+	logger.Println("GetCommand")
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 	for i := 0; i < termWidth; i++ {
@@ -447,6 +472,7 @@ func (d *Display) GetCommand(prompt string) (string, error) {
 	for {
 		termbox.Flush()
 		event := termbox.PollEvent()
+		logger.Printf("Event: %c\n", event.Ch)
 		if event.Type == termbox.EventKey {
 			if event.Key == termbox.KeyEsc || event.Key == termbox.KeyCtrlC {
 				d.searchText = nil
@@ -526,17 +552,30 @@ func (d *Display) ReadSearchText() bool {
 }
 
 func (d *Display) GetDisplayData() [][]string {
+	logger.Println("GetDisplayData")
 	_, termHeight := termbox.Size()
 
 	lastLine := d.voffset + termHeight - 1
 	firstLine := d.voffset
 	if d.fixHeader {
-		firstLine += 1
+		firstLine++
 	}
-	d.data.Load(lastLine)
+	logger.Println("Start loading data")
+	err := d.data.Load(lastLine)
+
+	if err != nil {
+		logger.Printf("err: %s\n", err.Error())
+		termbox.Close()
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
+		logger.Println("TermBox closed")
+		os.Exit(1)
+	}
+
 	if lastLine > d.data.GetLoadedLineCount() {
 		lastLine = d.data.GetLoadedLineCount()
 	}
+
+	logger.Println("Data loaded")
 
 	showData := make([][]string, 0, lastLine-d.voffset)
 	if d.fixHeader {
@@ -549,7 +588,9 @@ func (d *Display) GetDisplayData() [][]string {
 		} else {
 			showData = append(showData, []string{})
 		}
+		logger.Printf("header row: %s\n", row)
 	}
+	logger.Println("load header")
 	for i := firstLine; i < lastLine; i++ {
 		row, err := d.data.GetRow(i)
 
@@ -563,7 +604,9 @@ func (d *Display) GetDisplayData() [][]string {
 		} else {
 			showData = append(showData, []string{})
 		}
+		logger.Printf("row: %s\n", row)
 	}
+	logger.Println("done")
 
 	return showData
 }
@@ -571,6 +614,7 @@ func (d *Display) GetDisplayData() [][]string {
 var NUMBER_RE = regexp.MustCompile("^[\\d\\.-]+$")
 
 func (d *Display) Display() {
+	logger.Printf("Display\n")
 	termWidth, termHeight := termbox.Size()
 	termHeight -= 1
 

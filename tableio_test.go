@@ -28,7 +28,7 @@ import (
 func CheckTestData1(table Table, t *testing.T) {
 	row, err := table.GetRow(0)
 	if row[0] != "Header 1" {
-		t.Error("Invalid data at 0,0: %s", row[0])
+		t.Errorf("Invalid data at 0,0: %s", row[0])
 	}
 
 	row, err = table.GetRow(0)
@@ -127,7 +127,7 @@ func CheckTestData4(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("invalid number of columns in first line: %d", row)
+		t.Errorf("invalid number of columns in first line: %d", len(row))
 	}
 
 	row, err = table.GetRow(1)
@@ -330,7 +330,7 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", row)
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
 	row, err = table.GetRow(1)
@@ -349,7 +349,7 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", row)
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
 	row, err = table.GetRow(2)
@@ -368,7 +368,7 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", row)
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
 	row, err = table.GetRow(3)
@@ -387,7 +387,7 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(row))
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
 	row, err = table.GetRow(4)
@@ -406,7 +406,7 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(row))
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
 	row, err = table.GetRow(5)
@@ -425,10 +425,14 @@ func CheckTestData3(table Table, t *testing.T) {
 	}
 
 	if len(row) != 3 {
-		t.Errorf("Invalid number of columns in a cell", len(row))
+		t.Errorf("Invalid number of columns in a cell: %d", len(row))
 	}
 
-	table.LoadAll(1000)
+	_, err = table.LoadAll(1000)
+	if err != nil {
+		t.Errorf("Cannot get line count: %s", err.Error())
+	}
+
 	count, err := table.GetLineCountIfAvailable()
 
 	if err != nil {
@@ -452,7 +456,7 @@ func TestPartialTableEmpty(t *testing.T) {
 	defer table.Close()
 
 	if table.GetLoadedLineCount() != 0 {
-		t.Errorf("Too many loaded line", table.GetLoadedLineCount())
+		t.Errorf("Too many loaded line: %d", table.GetLoadedLineCount())
 	}
 
 	_, err = table.GetRow(0)
