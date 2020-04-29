@@ -1,6 +1,6 @@
 language: go
 go:
-- 1.9
+- 1.14
 before_script:
   - sed -i -e "s/@DEV@/$TRAVIS_TAG($TRAVIS_COMMIT)/" main.go
   - head -n12 main.go | tail -n3
