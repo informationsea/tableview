@@ -2,16 +2,16 @@ language: go
 go:
 - 1.14
 before_script:
-  - sed -i -e "s/@DEV@/$TRAVIS_TAG($TRAVIS_COMMIT)/" main.go
-  - head -n12 main.go | tail -n3
+- sed -i -e "s/@DEV@/$TRAVIS_TAG($TRAVIS_COMMIT)/" main.go
+- head -n12 main.go | tail -n3
 before_install:
-  - go get github.com/mitchellh/gox
+- go get github.com/mitchellh/gox
 before_deploy:
-  - gox
+- gox
 deploy:
   provider: releases
   api_key:
-    secure: "c1x7q9LmcWehfuZmiZkkZwGMTIhcUjxHP2ww5ZH7v4KVCPeNsWdcbXoFMSNZ0gZKy4LCO6xVR1Q5MaxzsZILaySfz1gloBRCSdCuAOcdqEAs8hXswUNSiinI2lzC/ak46a4RScw7FDSbgPWL5UDzWj9eWgUsZjmjo0+4kVOT83Yzq9d3w4diNsVZeiIcjkZxhNFQJyVapLCs0RsAy1xaF4WWmWHtCZwR+n9IQlWlRWS+811ZSraHcnurVYUEritdctEiMaxq1QKF2YZoEIprvUkdgYm6wSsvEPGHBwnu/ECy7W+1fsP1UxvRaRymLd5Tv5V5xYpcEvmwv5W80zH3h0rD0FvW6qMIpQuFRyDNu2z/nWUzECit+AwQhRO3PUA98MNpx2Bta8zNtcPW+f4t5OnVznAGfSOrzKcPPaA+gv1V2UCyiF6zTiIgIHalfRhMXQ25fNoWPPzm0AH33ah0WUVDvZO2a2JMLR996Yn90fJ/SrYF/+P6CF4VLL04Mf8Phn0jRBTwbvLvbEAIvn9ktrsOPor1Q9XnqDta31CNMcIy9SS+6RDDGVd5AN3KBe38OR5hcwzjG2uS26HFDWpYYsFc3h4Fa9B/XTa7yjIDfACH+KZHZV56PujnbhQ4/tmi0w27Bbe5auGoidyGZsA9t2rvkO5UUUl1lJEv4oFrPQY="
+    secure: cxZ3aLsLWaeS6nxE0rfzyThz94A7+evJ/IA4R+eglyA0vk9Mz5GtYyodDHiG2xDrQKKHBNNCq3Ge4Bp2V5qS9gpA5AyfZvRoxDOQFP/C0nAnQMKgQyp+98QMqP72jZIFjd5TsGB9pNE7XMqzYtpYP2HyJ22DOAknW8HMZmu221USYW724OFZdCfINK4OTrd1ML3JDxEgw89byZ4J339NrmIFYw16sB0kqTnltDYHP397cvKXVzlkhLmgOqThkrcJiUFIjsTNjLaDsIiUIktSid50I1bWcZZ9z4GV8d82FxlDkZpzwIB4xs+i6Ixis2ncp979OY+soZL19gChNv5R2HqC+K/JXsl0hbyJ0U52wKJVJ+i6ljpoXPUE6Di68jS34z5hBXenL6DOD7/Dh7loVjRCfNdi8l296Adr0OlaCchA5OUaE3yx6tZO3toM3qfq4itYFoSCWZ1/9YOFQydGpMYgsV+cdVMcffnJkdGBmr/bEEnciAhAwrNhxitdYKIJMkcKn/vAW0DYGbcoim6L7ULo6r3WUlSe81LW4cuDmi/iMfvGfSozkr3mHu4ALqLbv538kclO/XrJ1y7yFDyphWKKnN5W7korppVyjH6ZbQb3NQD+hujideQVUknI9pEAREBHzcNpGGCwdBcQ1ZhzbkVoNO1uN5RhFtE9Kz1zHDs=
   file:
     - tableview_windows_386.exe
     - tableview_windows_amd64.exe
@@ -30,5 +30,5 @@ deploy:
     - tableview_openbsd_amd64
   on:
     repo: informationsea/tableview
-    tags: true
-  skip_cleanup: true
+    tags: 'true'
+  skip_cleanup: 'true'
