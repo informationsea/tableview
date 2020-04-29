@@ -464,3 +464,143 @@ func TestPartialTableEmpty(t *testing.T) {
 		t.Error("getting empty column should be null")
 	}
 }
+
+func TestCSVParse1(t *testing.T) {
+	row, remain, err := ParseCSVRecord("a,b,c", true)
+	if err != nil {
+		t.Errorf("CSV Parse Error")
+		return
+	}
+
+	if remain != "" {
+		t.Errorf("Bad remain line")
+		return
+	}
+
+	if len(row) != 3 {
+		t.Errorf("Bad row length: %d", len(row))
+		return
+	}
+
+	if row[0] != "a" {
+		t.Errorf("Bad data \"a\" != %s", row[0])
+		return
+	}
+
+	if row[1] != "b" {
+		t.Errorf("Bad data \"b\" != %s", row[0])
+		return
+	}
+
+	if row[2] != "c" {
+		t.Errorf("Bad data \"c\" != %s", row[0])
+		return
+	}
+}
+
+func TestCSVParse2(t *testing.T) {
+	row, remain, err := ParseCSVRecord("a,b,c\r\nx", false)
+	if err != nil {
+		t.Errorf("CSV Parse Error")
+		return
+	}
+
+	if remain != "x" {
+		t.Errorf("Bad remain line")
+		return
+	}
+
+	if len(row) != 3 {
+		t.Errorf("Bad row length: %d", len(row))
+		return
+	}
+
+	if row[0] != "a" {
+		t.Errorf("Bad data \"a\" != %s", row[0])
+		return
+	}
+
+	if row[1] != "b" {
+		t.Errorf("Bad data \"b\" != %s", row[0])
+		return
+	}
+
+	if row[2] != "c" {
+		t.Errorf("Bad data \"c\" != %s", row[0])
+		return
+	}
+}
+
+func TestCSVParse3(t *testing.T) {
+	row, remain, err := ParseCSVRecord("a,b,c", false)
+	if err != nil {
+		t.Errorf("CSV Parse Error")
+		return
+	}
+
+	if remain != "a,b,c" {
+		t.Errorf("Bad remain line")
+		return
+	}
+
+	if row != nil {
+		t.Errorf("Bad row data")
+		return
+	}
+}
+
+func TestCSVParse4(t *testing.T) {
+	row, remain, err := ParseCSVRecord("a,b,c,\"d\"\"e\nf\"\r\nx", false)
+	if err != nil {
+		t.Errorf("CSV Parse Error")
+		return
+	}
+
+	if remain != "x" {
+		t.Errorf("Bad remain line: %s", remain)
+		return
+	}
+
+	if len(row) != 4 {
+		t.Errorf("Bad row length: %d", len(row))
+		return
+	}
+
+	if row[0] != "a" {
+		t.Errorf("Bad data \"a\" != %s", row[0])
+		return
+	}
+
+	if row[1] != "b" {
+		t.Errorf("Bad data \"b\" != %s", row[0])
+		return
+	}
+
+	if row[2] != "c" {
+		t.Errorf("Bad data \"c\" != %s", row[0])
+		return
+	}
+
+	if row[3] != "d\"e\nf" {
+		t.Errorf("Bad data \"d\"e\nf\" != %s", row[0])
+		return
+	}
+}
+
+func TestCSVParse5(t *testing.T) {
+	row, remain, err := ParseCSVRecord("a,b,c,\"d\"\"e\nf", false)
+	if err != nil {
+		t.Errorf("CSV Parse Error")
+		return
+	}
+
+	if remain != "a,b,c,\"d\"\"e\nf" {
+		t.Errorf("Bad remain line: %s", remain)
+		return
+	}
+
+	if row != nil {
+		t.Errorf("Bad row data")
+		return
+	}
+}

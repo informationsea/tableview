@@ -51,7 +51,7 @@ func displayWidthChar(char rune) int {
 	if p.Kind() == width.EastAsianAmbiguous || p.Kind() == width.EastAsianWide || p.Kind() == width.EastAsianFullwidth {
 		textwidth += 2
 	} else {
-		textwidth += 1
+		textwidth++
 	}
 	return textwidth
 }

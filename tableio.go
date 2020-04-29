@@ -116,8 +116,7 @@ func LoadTableFromFile(filename string, format string, sheetNum int) (Table, err
 	if format == "tsv" {
 		return CreatePartialTable(reader, ParseTSVRecord), nil
 	} else if format == "csv" {
-		csvReader := csv.NewReader(reader)
-		return CreatePartialCSV(csvReader), nil
+		return CreatePartialTable(reader, ParseCSVRecord), nil
 	}
 
 	return nil, errors.New("Unknown error")
@@ -177,6 +176,68 @@ func ParseTSVRecord(data string, atEOF bool) ([]string, string, error) {
 	} else {
 		return strings.Split(data[:lineEnd], "\t"), data[lineEnd+1:], nil
 	}
+}
+
+const (
+	csvOutQuote = iota
+	csvInQuote
+	csvDoubleQuote
+)
+
+func ParseCSVRecord(data string, atEOF bool) ([]string, string, error) {
+	row := make([]string, 0)
+	currentText := ""
+	currentStatus := csvOutQuote
+	for i, r := range data {
+		switch currentStatus {
+		case csvOutQuote:
+			switch r {
+			case '"':
+				currentStatus = csvInQuote
+			case ',':
+				row = append(row, currentText)
+				currentText = ""
+			case '\r':
+				// skip
+			case '\n':
+				row = append(row, currentText)
+				return row, data[i+1:], nil
+			default:
+				currentText += string(r)
+			}
+		case csvInQuote:
+			switch r {
+			case '"':
+				currentStatus = csvDoubleQuote
+			default:
+				currentText += string(r)
+			}
+		case csvDoubleQuote:
+			switch r {
+			case ',':
+				row = append(row, currentText)
+				currentStatus = csvOutQuote
+				currentText = ""
+			case '\r':
+				// skip
+			case '\n':
+				row = append(row, currentText)
+				return row, data[i+1:], nil
+			case '"':
+				currentText += "\""
+				currentStatus = csvInQuote
+			default:
+				currentStatus = csvOutQuote
+				currentText += string(r)
+			}
+
+		}
+	}
+	if atEOF {
+		row = append(row, currentText)
+		return row, "", nil
+	}
+	return nil, data, nil
 }
 
 type partialTableData struct {
