@@ -604,3 +604,33 @@ func TestCSVParse5(t *testing.T) {
 		return
 	}
 }
+
+func TestCSVParse6(t *testing.T) {
+	data, err1 := LoadTableFromFile("testdata/test5.csv", "auto", 1)
+
+	if err1 != nil {
+		t.Errorf("Cannot open file: %s", err1)
+		return
+	}
+	defer data.Close()
+
+	result, err3 := data.LoadAll(1000)
+	if err3 != nil {
+		t.Errorf("Cannot load all data: %s", err3)
+		return
+	}
+	if !result {
+		t.Errorf("Cannot load all data: Unknown")
+		return
+	}
+
+	line, err2 := data.GetLineCountIfAvailable()
+	if err2 != nil {
+		t.Errorf("Cannot count line: %s", err2)
+		return
+	}
+	if line != 10001 {
+		t.Errorf("Invalid count: %d", line)
+		return
+	}
+}

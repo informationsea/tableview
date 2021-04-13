@@ -80,7 +80,7 @@ func main() {
 
 	if *showVersion {
 		fmt.Printf("tableview : human friendly table viewer\nVersion: %s\n\n", VERSION)
-		fmt.Println("Copyright (C) 2016  OKAMURA, Yasunobu")
+		fmt.Println("Copyright (C) 2016-2021  OKAMURA, Yasunobu")
 		fmt.Println("")
 		fmt.Println("This program is free software: you can redistribute it and/or modify")
 		fmt.Println("it under the terms of the GNU General Public License as published by")
@@ -317,7 +317,7 @@ func (d *Display) loadAllData() error {
 			if e != nil {
 				panic(e)
 			}
-			if !c {
+			if c {
 				break
 			}
 

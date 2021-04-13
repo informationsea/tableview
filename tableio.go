@@ -350,7 +350,9 @@ func (p *PartialTable) LoadAll(timeout int) (bool, error) {
 		}
 		p.data = append(p.data, v.lines)
 		d := time.Since(start)
-		if d.Nanoseconds() > int64(timeout)*1000 {
+		if d.Nanoseconds() > int64(timeout)*1000*1000 {
+			fmt.Fprintf(os.Stderr, "Timeout %d", d.Nanoseconds())
+			//logger.Printf("Timeout %d", d.Nanoseconds())
 			return false, nil
 		}
 	}
